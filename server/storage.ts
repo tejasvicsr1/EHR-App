@@ -130,19 +130,24 @@ export class DatabaseStorage implements IStorage {
 
   // Patient operations
   async getPatients(doctorId: number, search?: string): Promise<Patient[]> {
-    let query = db.select().from(patients).where(eq(patients.doctorId, doctorId));
-    
     if (search) {
-      query = query.where(
-        or(
-          like(patients.fullName, `%${search}%`),
-          like(patients.abhaId, `%${search}%`),
-          like(patients.mobile, `%${search}%`)
+      return await db.select().from(patients)
+        .where(
+          and(
+            eq(patients.doctorId, doctorId),
+            or(
+              like(patients.fullName, `%${search}%`),
+              like(patients.abhaId, `%${search}%`),
+              like(patients.mobile, `%${search}%`)
+            )
+          )
         )
-      );
+        .orderBy(desc(patients.updatedAt));
     }
     
-    return await query.orderBy(desc(patients.updatedAt));
+    return await db.select().from(patients)
+      .where(eq(patients.doctorId, doctorId))
+      .orderBy(desc(patients.updatedAt));
   }
 
   async getPatient(id: number): Promise<Patient | undefined> {
@@ -171,13 +176,15 @@ export class DatabaseStorage implements IStorage {
 
   // Consultation operations
   async getConsultations(doctorId: number, status?: string): Promise<Consultation[]> {
-    let query = db.select().from(consultations).where(eq(consultations.doctorId, doctorId));
-    
     if (status) {
-      query = query.where(and(eq(consultations.doctorId, doctorId), eq(consultations.status, status)));
+      return await db.select().from(consultations)
+        .where(and(eq(consultations.doctorId, doctorId), eq(consultations.status, status)))
+        .orderBy(desc(consultations.scheduledAt));
     }
     
-    return await query.orderBy(desc(consultations.scheduledAt));
+    return await db.select().from(consultations)
+      .where(eq(consultations.doctorId, doctorId))
+      .orderBy(desc(consultations.scheduledAt));
   }
 
   async getConsultation(id: number): Promise<Consultation | undefined> {

@@ -27,6 +27,7 @@ function Router() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
+        setIsAuthenticated(false);
         setIsLoading(false);
         return;
       }
@@ -43,10 +44,12 @@ function Router() {
         setIsAuthenticated(true);
       } else {
         localStorage.removeItem("token");
+        setIsAuthenticated(false);
       }
     } catch (error) {
       console.error("Auth check failed:", error);
       localStorage.removeItem("token");
+      setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
     }
