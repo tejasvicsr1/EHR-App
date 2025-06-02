@@ -230,12 +230,16 @@ export const insertPatientSchema = createInsertSchema(patients).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  dateOfBirth: z.string().optional().transform((val) => val ? new Date(val) : undefined),
 });
 
 export const insertConsultationSchema = createInsertSchema(consultations).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  scheduledAt: z.string().optional().transform((val) => val ? new Date(val) : undefined),
 });
 
 export const insertPrescriptionSchema = createInsertSchema(prescriptions).omit({
