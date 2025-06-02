@@ -1,0 +1,297 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.7% 60%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --primary: 207 90% 54%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 207 90% 54%;
+  --radius: 0.5rem;
+  --sidebar-background: 0 0% 98%;
+  --sidebar-foreground: 240 5.3% 26.1%;
+  --sidebar-primary: 207 90% 54%;
+  --sidebar-primary-foreground: 0 0% 98%;
+  --sidebar-accent: 240 4.8% 95.9%;
+  --sidebar-accent-foreground: 240 5.9% 10%;
+  --sidebar-border: 240 5.9% 90%;
+  --sidebar-ring: 207 90% 54%;
+  
+  /* Healthcare-specific colors */
+  --healthcare-primary: 207 90% 54%; /* #1976D2 - Medical blue */
+  --healthcare-secondary: 122 39% 49%; /* #4CAF50 - Medical green */
+  --healthcare-accent: 14 100% 57%; /* #FF6B35 - Warning orange */
+  --healthcare-neutral-50: 210 20% 98%; /* #F9FAFB */
+  --healthcare-neutral-100: 220 14% 96%; /* #F3F4F6 */
+  --healthcare-neutral-200: 220 13% 91%; /* #E5E7EB */
+  --healthcare-neutral-300: 216 12% 84%; /* #D1D5DB */
+  --healthcare-neutral-400: 218 11% 65%; /* #9CA3AF */
+  --healthcare-neutral-500: 220 9% 46%; /* #6B7280 */
+  --healthcare-neutral-600: 215 14% 34%; /* #4B5563 */
+  --healthcare-neutral-700: 217 19% 27%; /* #374151 */
+  --healthcare-neutral-800: 215 28% 17%; /* #1F2937 */
+  --healthcare-neutral-900: 221 39% 11%; /* #111827 */
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 207 90% 54%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 207 90% 54%;
+  --sidebar-background: 240 5.9% 10%;
+  --sidebar-foreground: 240 4.8% 95.9%;
+  --sidebar-primary: 207 90% 54%;
+  --sidebar-primary-foreground: 0 0% 98%;
+  --sidebar-accent: 240 3.7% 15.9%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 240 3.7% 15.9%;
+  --sidebar-ring: 207 90% 54%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Healthcare-specific styles */
+  .healthcare-gradient {
+    background: linear-gradient(135deg, hsl(207 90% 54%) 0%, hsl(207 90% 64%) 100%);
+  }
+  
+  .healthcare-card {
+    @apply bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm;
+  }
+  
+  .healthcare-button-primary {
+    @apply bg-primary hover:bg-primary/90 text-primary-foreground;
+  }
+  
+  .healthcare-button-secondary {
+    @apply bg-secondary-500 hover:bg-secondary-600 text-white;
+  }
+  
+  .healthcare-text-primary {
+    @apply text-primary;
+  }
+  
+  .healthcare-text-secondary {
+    @apply text-secondary-500;
+  }
+  
+  /* Voice recording animations */
+  @keyframes pulse-wave {
+    0%, 100% { 
+      transform: scaleY(1);
+      opacity: 0.7;
+    }
+    50% { 
+      transform: scaleY(1.5);
+      opacity: 1;
+    }
+  }
+  
+  .voice-wave {
+    animation: pulse-wave 1s ease-in-out infinite;
+  }
+  
+  .voice-wave:nth-child(2) { animation-delay: 0.1s; }
+  .voice-wave:nth-child(3) { animation-delay: 0.2s; }
+  .voice-wave:nth-child(4) { animation-delay: 0.3s; }
+  .voice-wave:nth-child(5) { animation-delay: 0.4s; }
+  .voice-wave:nth-child(6) { animation-delay: 0.5s; }
+  .voice-wave:nth-child(7) { animation-delay: 0.6s; }
+  
+  /* NDHM compliance indicators */
+  .ndhm-verified {
+    @apply bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 border border-green-200 dark:border-green-800;
+  }
+  
+  .ndhm-pending {
+    @apply bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 border border-amber-200 dark:border-amber-800;
+  }
+  
+  /* Prescription styles */
+  .prescription-header {
+    @apply border-b-2 border-primary pb-4 mb-6;
+  }
+  
+  .digital-signature {
+    @apply bg-gradient-to-r from-primary/10 to-secondary-500/10 border border-primary/20 rounded-lg p-4;
+  }
+  
+  /* Accessibility improvements */
+  .focus-visible:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+  
+  /* Print styles for prescriptions */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    
+    .prescription-container {
+      @apply bg-white text-black;
+      box-shadow: none !important;
+      border: 1px solid #000 !important;
+    }
+  }
+  
+  /* Mobile-specific adjustments */
+  @media (max-width: 640px) {
+    .mobile-stack {
+      @apply flex-col space-y-2 space-x-0;
+    }
+    
+    .mobile-full {
+      @apply w-full;
+    }
+  }
+  
+  /* Loading states */
+  .skeleton {
+    @apply animate-pulse bg-neutral-200 dark:bg-neutral-700 rounded;
+  }
+  
+  /* Status indicators */
+  .status-active {
+    @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100;
+  }
+  
+  .status-pending {
+    @apply bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100;
+  }
+  
+  .status-inactive {
+    @apply bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100;
+  }
+  
+  /* Form enhancements */
+  .form-field-error {
+    @apply border-destructive focus:border-destructive focus:ring-destructive;
+  }
+  
+  .form-error-text {
+    @apply text-destructive text-sm mt-1;
+  }
+  
+  /* Data visualization */
+  .chart-container {
+    @apply bg-white dark:bg-neutral-800 p-4 rounded-lg border border-neutral-200 dark:border-neutral-700;
+  }
+}
+
+/* Custom scrollbar for better UX */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--border));
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground));
+}
+
+/* Transition improvements */
+.smooth-transition {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Healthcare-specific component styles */
+.patient-card {
+  @apply healthcare-card p-4 hover:shadow-md transition-shadow duration-200;
+}
+
+.consultation-status {
+  @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.medication-item {
+  @apply flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-700 rounded-lg;
+}
+
+.voice-recording-indicator {
+  @apply flex items-center space-x-1 text-red-500;
+}
+
+/* Enhanced focus states for accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: 0 0% 20%;
+    --ring: 207 90% 40%;
+  }
+  
+  .dark {
+    --border: 0 0% 80%;
+    --ring: 207 90% 60%;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .voice-wave {
+    animation: none;
+  }
+  
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
