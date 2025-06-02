@@ -102,7 +102,7 @@
   }
   
   .healthcare-button-secondary {
-    @apply bg-secondary-500 hover:bg-secondary-600 text-white;
+    @apply bg-green-500 hover:bg-green-600 text-white;
   }
   
   .healthcare-text-primary {
@@ -110,7 +110,7 @@
   }
   
   .healthcare-text-secondary {
-    @apply text-secondary-500;
+    @apply text-green-500;
   }
   
   /* Voice recording animations */
@@ -151,7 +151,7 @@
   }
   
   .digital-signature {
-    @apply bg-gradient-to-r from-primary/10 to-secondary-500/10 border border-primary/20 rounded-lg p-4;
+    @apply bg-gradient-to-r from-primary/10 to-green-500/10 border border-primary/20 rounded-lg p-4;
   }
   
   /* Accessibility improvements */
