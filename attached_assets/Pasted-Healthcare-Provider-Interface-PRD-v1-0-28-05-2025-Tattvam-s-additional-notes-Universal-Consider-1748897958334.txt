@@ -1,0 +1,1026 @@
+Healthcare Provider Interface PRD v1.0 | 28/05/2025
+**Tattvam’s additional notes
+
+Universal Considerations (Applicable to all modules):
+Responsiveness: UI must be responsive (web app for desktop/tablet, potentially dedicated mobile app views).
+Multilingual Support:
+All static UI text (labels, buttons, messages) to be internationalized.
+User-generated content (notes, prescriptions) to support Devanagari scripts and other Indian languages.
+AI Scribe must support multiple Indian languages for dictation and conversation, and also potentially translate common medical terms.
+Language selection available in user profile and potentially on login.
+Accessibility: Adherence to WCAG 2.1 AA guidelines (color contrast, keyboard navigation, screen reader compatibility). https://www.w3.org/TR/WCAG21/ 
+Performance: Fast load times, real-time updates where necessary (e.g., AI scribe, appointment status).
+Security:
+Data encrypted at rest and in transit.
+Role-based access control is strictly enforced.
+Regular security audits.
+Session timeouts.
+Error Handling: Clear, user-friendly error messages. Specific error codes for backend logging. Guidance on how to resolve the error.
+Tooltips & Help: "?" icons next to complex fields or sections, providing brief explanations on hover. A dedicated help/FAQ section.
+NDHM Compliance:
+All patient identifiers will prioritize ABHA ID.
+Consent management via NDHM framework for data sharing.
+HPR ID for doctor verification. HFR ID for facility verification.
+FHIR R4 for data structures and exchange. https://hl7.org/fhir/R4/ 
+Digitally signed documents (prescriptions, summaries), comply with NDHM guidelines.
+
+Doctor Interface
+I. Facility Onboarding Flow (First Launch Experience)
+Screen 1: Welcome & Practice Setup Selection
+UI:
+App Logo and Name prominently displayed.
+Headline: "Welcome to LAYRD! Let's set up your practice."
+Sub-headline: "Tell us about your practice setup to tailor your experience."
+Radio Button Options:
+Solo/Small Clinic (1–3 doctors):
+Description: "Ideal for individual practitioners or small teams. Each doctor manages their own schedule, records, and settings directly. Verified doctor profiles are auto-created. No separate admin role needed initially."
+Group Practice/Clinic (4–n doctors):
+Description: "For mid-sized clinics. A designated admin manages overall doctor profiles, facility-wide appointment slots, patient follow-up configurations, and system integrations. Doctors manage their consultations and clinical data."
+Large Hospital or Tertiary Center (>n doctors):
+Description: "Comprehensive setup for hospitals with multiple departments and staff roles. Features full role-based access control (Super Admin, Doctors, Lab/Pharmacy Officers, Cross-Referral Consultants, Reception Staff, etc.)."
+Button: [Next] (Disabled until an option is selected).
+Link: "Learn more about these options" (opens a modal with detailed feature comparison).
+Footer: "Already have an account? Login"
+Logic:
+Selection determines the subsequent onboarding steps and default system configuration.
+Scenario 1.1: User selects "Solo/Small Clinic"
+Next Screen: Doctor Information & Verification
+Headline: "Let's set up your Doctor Profile."
+Fields:
+Full Name (as per intended HPR registration) (Required)
+Mobile Number (for OTP login & communication, ideally Aadhaar linked) (Required, validated format)
+Email Address (for password login & communication) (Required, validated format)
+HPR ID (Healthcare Professional Registry ID): (Text field)
+Tooltip: "Enter your 14-digit HPR ID. This is crucial for NDHM compliance and digital signing. It will be verified with the National Digital Health Mission (NDHM)."
+Link: "What is HPR ID?" (Opens modal with brief explanation).
+Checkbox/Link below HPR ID field: [ ] I don't have an HPR ID / Need to register.
+Create Password (Required, with strength indicator)
+Confirm Password (Required)
+Checkbox: "I agree to the Terms & Conditions and Privacy Policy." (Links open in new tabs/modal)
+Button: [Verify HPR ID & Create Account] (Default, active if HPR ID field has input and checkbox is unchecked) / [Proceed to HPR Registration Guidance] (Active if "I don't have an HPR ID" is checked)
+Sub-Flow 1.1.1: User has an HPR ID and enters it (checkbox is unchecked):
+User clicks [Verify HPR ID & Create Account].
+System validates input fields locally (Name, Mobile, Email, Password fields). If the HPR ID field is empty, prompt the user to enter or check the box.
+Backend API call to HPR Registry with the entered HPR ID.
+Success: HPR returns doctor's verified name, specialization, registration number. These are stored. The "Full Name" field on the form might get locked or system may suggest updating it to match the HPR record.
+Failure (HPR ID not found/invalid): Error message: "HPR ID not found or invalid. Please check and try again. If you've recently registered, it might take some time for the ID to be active in the central registry. If you don't have one, please check the 'I don't have an HPR ID' box." The button remains [Verify HPR ID & Create Account].
+Failure (API unavailable): Error message: "Could not connect to HPR Registry at this moment. Please try again later."
+If HPR verification is successful:
+Send OTP to the provided Mobile Number.
+Next Screen: OTP Verification
+Headline: "Verify Your Mobile Number"
+Message: "An OTP has been sent to [Mobile Number]. Please enter it below."
+Field: OTP (6 digits)
+Button: [Verify OTP & Create Account]
+Link: Resend OTP (becomes active after 30 seconds).
+Success: Account created. Doctor is logged in. Profile pre-filled with HPR data. Admin functionalities are integrated.
+Failure (Invalid OTP): Error message: "Invalid OTP. Please try again." (OTP attempts counter).
+Failure (OTP Expired): Error message: "OTP expired. Please request a new one."
+Initial profile setup prompt (can be done post-login too): Specialization (pre-filled, editable if needed), Years of Experience, Clinic Name, Clinic Address (Google Maps API), Consultation Fee (optional) **more details: should be able to add services and charges, time slots, included later in this document, Upload Digital Signature, Upload Profile Picture. **Also, please let us try to make inputs voice-based where relevant, some sort of voice component in the interaction?
+Redirect to Doctor Dashboard.
+Sub-Flow 1.1.2: User checks "I don't have an HPR ID / Need to register":
+The HPR ID input field might become disabled or visually de-emphasized.
+The primary action button becomes [Proceed to HPR Registration Guidance]. User clicks it.
+Next Screen/Modal: HPR Registration Guidance
+Headline: "Register on the Healthcare Professionals Registry (HPR)"
+Informational Text: "An HPR ID is mandatory for doctors to practice under NDHM guidelines. It enables secure verification, digital signing of prescriptions, and participation in the national digital health ecosystem. Our EHR requires a verified HPR ID for full functionality." 
+Guidance Steps:
+"Visit the Official Portal: Click here to go to the HPR registration portal: hpr.abdm.gov.in (This link will open in a new browser tab)." **or can we do this on our app? Like ABHA number for patients.
+"Required Documents (Typical): Prepare digital copies of your Aadhaar card (linked with mobile for OTP), Medical Council Registration Certificate, Degree/Diploma Certificate, a recent photograph, and a digital signature specimen. Requirements may vary, please refer to the HPR portal for the latest list."
+"Registration Process: Follow the instructions on the HPR portal. This usually involves Aadhaar eKYC, filling out your professional details, uploading documents, and submitting your application."
+"Await Approval: Your application will be processed by the relevant authorities. You will receive your HPR ID once approved."
+EHR Action Options on this Guidance Screen:
+"To save your progress here (Name, Mobile, Email, Password), we will create a provisional account. You can complete your HPR registration and then add your HPR ID to our system to unlock full features."
+Button: [Save Provisional Profile & Go to HPR Portal] (Validates Name, Mobile, Email, Password. Sends OTP to mobile. On OTP success, creates provisional account. Opens HPR portal in new tab. Logs user into a limited EHR state).
+Button: [I will register later & Save Provisional Profile] (Validates fields. Sends OTP. On success, creates provisional account. Logs user into limited EHR state).
+Link: [Cancel Setup] (Returns to the very first onboarding screen).
+Limited EHR State (Provisional Account):
+Doctor Dashboard is minimal.
+Prominent CTA: "Your HPR ID is pending. Click here to add and verify your HPR ID to activate full features." This links to the profile settings page.
+Clinical functions (starting consultation, prescribing) are disabled or show a message: "HPR ID Verification Required for this action."
+Returning to EHR after HPR Registration:
+Doctor logs into their provisional EHR account.
+Clicks the CTA or navigates to Profile Settings.
+Enters their newly obtained HPR ID in the designated field.
+System triggers HPR verification (as in Sub-Flow 1.1.1, step 3).
+Upon successful verification, the account is fully activated. All features are unlocked. A confirmation message is shown.
+Scenario 1.2: User selects "Group Practice/Clinic" or "Large Hospital"
+Next Screen: Admin Information & Facility Details
+Headline: "Let's set up your Facility Admin Account." (This user will be the initial Super Admin).
+Fields:
+Facility Name (Required)
+Facility Type (Dropdown: Clinic, Nursing Home, Hospital, Diagnostic Center - depending on initial selection, this might be pre-filtered) (Required)
+Admin Full Name (Required)
+Admin Mobile Number (for OTP login & communication) (Required, validated format)
+Admin Email Address (for password login & communication) (Required, validated format)
+Create Password (Required, with strength indicator)
+Confirm Password (Required)
+Facility Address (Street, City, Pincode, State). Google Maps API integration. (Required)
+Facility ABHA ID (HFR ID - Health Facility Registry): (Text field)
+Tooltip: "Enter your facility's 14-character ABHA ID (HFR ID). This is important for NDHM compliance and identifying your facility in the national network."
+Link: "What is a Facility ABHA ID / HFR?" (Opens modal with brief explanation).
+Checkbox/Link below Facility ABHA ID field: [ ] Our facility is not yet registered on HFR / We don't have a Facility ABHA ID.
+Checkbox: "I agree to the Terms & Conditions and Privacy Policy."
+Button: [Create Admin Account & Facility] (Default, active if checkbox is unchecked or if Facility ABHA ID field has input) / [Proceed to HFR Registration Guidance] (Active if "Our facility is not yet registered on HFR" is checked).
+Sub-Flow 1.2.1: Facility ABHA ID is entered or checkbox is unchecked (Admin proceeds with account creation):
+User clicks [Create Admin Account & Facility].
+System validates input fields locally.
+Send OTP to the provided Admin Mobile Number.
+Next Screen: OTP Verification (Same as Solo Clinic OTP screen, but button says [Verify OTP & Create Account])
+Success (OTP Verified): Admin account created. Facility profile created.
+If Facility ABHA ID was entered: System attempts to verify it with HFR (API call).
+HFR Verification Success: ID confirmed. Status marked as "Verified" in facility settings.
+HFR Verification Failure (ID Invalid/Not Found): Message: "Facility ABHA ID could not be verified at this time. You can update it later in Facility Settings." Status marked as "Unverified."
+HFR API Unavailable: Message: "Could not connect to HFR. Please try verifying the ID later in Facility Settings." Status marked "Unverified."
+Admin is logged in and redirected to the Admin Dashboard. Initial view prompts to complete facility setup.
+Failure (OTP): Appropriate error messages.
+Sub-Flow 1.2.2: User checks "Our facility is not yet registered on HFR / We don't have a Facility ABHA ID":
+The Facility ABHA ID input field might become disabled.
+The primary action button becomes [Proceed to HFR Registration Guidance]. User clicks it.
+Next Screen/Modal: HFR Registration Guidance
+Headline: "Register Your Facility on the Health Facility Registry (HFR)"
+Informational Text: "Registering on HFR and obtaining a Facility ABHA ID is vital for your facility's participation in the NDHM ecosystem. It allows for verified facility identity, enables digital interactions, and ensures compliance."
+Guidance Steps:
+"Visit the Official Portal: Click here to go to the HFR registration portal: facility.abdm.gov.in (This link will open in a new browser tab)." **Again, can we do this on the app itself?
+"Required Information (Typical): You'll need details like facility ownership, address proof, registration certificates (e.g., Clinical Establishment Act registration), services offered, key personnel information. Requirements can vary; refer to the HFR portal."
+"Registration Process: Follow the steps on the HFR portal."
+"Await Approval & ID: Upon approval, you will receive a Facility ABHA ID."
+EHR Action Options on this Guidance Screen:
+"You can proceed to create your Admin account and set up the basic facility profile in our EHR. Once you receive your Facility ABHA ID, please add and verify it in the 'Facility Settings' section of the Admin Panel."
+Button: [Create Admin Account & Continue Setup] (Validates Admin Name, Mobile, Email, Facility Name/Type/Address, Password. Sends OTP to admin mobile. On OTP success, creates an Admin account and basic facility profile with HFR ID as pending. Logs admin into Admin Dashboard).
+Link: [Cancel Setup] (Returns to the very first onboarding screen).
+Admin Dashboard (with HFR ID Pending):
+Facility Settings will show "Facility ABHA ID: Not yet provided / Verification Pending."
+A CTA might prompt the admin to add/verify it.
+Adding/Verifying HFR ID Later:
+Admin navigates to Admin Panel -> Facility Settings.
+Enters the Facility ABHA ID in the designated field.
+Clicks [Verify ID]. System attempts HFR verification (as in Sub-Flow 1.2.1, step 4, HFR verification part). Status is updated.
+
+II. Login and Access Control
+Screen: Login
+UI:
+App Logo and Name.
+Tabs/Toggle: Login with OTP | Login with Email/Password
+Login with OTP (Default View):
+Field: Mobile Number (Registered with the system) (Required)
+Button: [Send OTP]
+After OTP sent:
+Field: OTP (6 digits)
+Button: [Login]
+Link: Resend OTP
+Login with Email/Password:
+Field: Email Address (Registered) (Required)
+Field: Password (Required)
+Link: Forgot Password?
+Button: [Login]
+Footer Link: "New to [Your EHR Name]? Create Account" (redirects to Onboarding).
+2FA (Two-Factor Authentication):
+If enabled for the user (either by admin or user preference):
+After successful OTP or Password validation, a 2FA screen appears.
+Headline: "Two-Factor Authentication"
+Message: "Enter the code from your authenticator app." or "An SMS with a verification code has been sent to your registered mobile." (depending on the 2FA method configured).
+Field: 2FA Code (6 digits).
+Button: [Verify & Login]
+Link: Having trouble? (provides options like "Use recovery code" or "Resend SMS code").
+Scenarios & Logic:
+Successful Login:
+System identifies the user role (Doctor, Admin, Receptionist, etc.).
+If Doctor with Provisional (HPR pending) account: Redirect to limited Doctor Dashboard with HPR CTA.
+Else: Redirects to the appropriate full dashboard (Doctor Dashboard, Admin Dashboard, etc.).
+Incorrect Mobile/Email/Password: Error message: "Invalid credentials. Please try again."
+Account Locked (too many failed attempts): Error message: "Account locked due to multiple failed login attempts. Please try again after [X] minutes of use 'Forgot Password'."
+HPR ID Verification for Doctors (Periodic or on suspicion): Although verified at onboarding/profile update, the system might re-verify HPR status periodically. If HPR status changes (e.g., license suspended), access might be restricted, and Admin notified.
+Forgot Password Flow:
+User clicks Forgot Password?.
+Screen: Reset Password
+Field: Registered Email Address.
+Button: [Send Reset Link]
+Email sent with a unique, time-sensitive password reset link.
+User clicks link, opens page:
+Fields: New Password, Confirm New Password.
+Button: [Reset Password]
+Password updated. User is notified of success and can now login.
+Role-Based Access Control (RBAC) - General Principle:
+Every API endpoint and UI element will have associated permissions.
+When a user logs in, their roles and associated permissions are loaded.
+UI elements for which the user lacks permission will be hidden or disabled.
+API calls to unauthorized endpoints will be rejected with a 403 Forbidden error.
+Doctors with provisional (HPR pending) accounts have a highly restricted role until HPR is verified.
+
+III. Doctor Dashboard (Home Screen)
+UI (Clean, Minimal, Positive):
+Header:
+App Logo.
+Personalized Greeting: "Great job today, Dr. [Doctor's Name]!" or "You’ve helped [X] people this week, Dr. [Name]!"
+Notification Bell Icon (with badge for unread notifications).
+User Profile Icon (dropdown with links to "Profile," "Settings," "Logout").
+(Conditional CTA for Provisional Accounts) If doctor has a provisional account (HPR ID pending):
+Prominent banner/card: "ACTION REQUIRED: Your HPR ID is pending verification. Click here to add and verify your HPR ID to activate full EHR features." (Links to profile settings).
+Main Content Area (Card-based or clear sections - visible for fully activated accounts):
+Primary Action Button (Prominent): [Start Next Consultation] or [View Today's Appointments]
+If clicked, directly opens the consultation interface for the next confirmed, pending patient in the queue for the current day. If no patients, it might go to the appointment list view for today.
+Positive Metric Cards (Today Focus, with subtle weekly/monthly trend indicators):
+"Patients Helped Today": Large number. Sub-text: "Weekly: [Y] | Monthly: [Z]" (small, subtle trend graph icon).
+"Prescriptions Approved Today": Large number.
+"Follow-ups Completed Today" (by AI or Doctor): Large number.
+(Optional) "Positive Patient Feedback Today": Number or star rating average. (Requires feedback mechanism).
+Quick Links/Widgets:
+"Upcoming Appointments ([Count for today])" - link to full appointment list.
+"Pending Lab Results ([Count])" - link to reports module.
+"Actionable Follow-ups ([Count])" - link to AI follow-up review.
+"Unread Messages ([Count])" - link to internal messaging or patient query section.
+Footer (Minimal): Links to "Help & Support," "Terms," "Privacy."
+Scenarios & Logic:
+Data for metrics is fetched upon login and can auto-refresh periodically or on certain actions.
+Numbers should reflect real-time or near real-time data.
+Start Next Consultation logic:
+Checks for appointments scheduled for the current doctor for today.
+Filters for status: "Confirmed" or "Waiting."
+Sorts by appointment time.
+Selects the earliest one that hasn't been "Completed" or "Cancelled."
+If no patients meeting criteria, button might change to "No upcoming appointments" or link to full schedule.
+For provisional accounts, most metrics and quick links related to clinical activity would be disabled or show "0" with a note about HPR ID pending.
+
+IV. Appointment Management (Doctor's View)
+(Conditional Access) This module might be view-only or limited for doctors with provisional (HPR pending) accounts. They might be able to see their schedule if set up by an admin, but not initiate consultations or modify appointments extensively.
+UI:
+Header: "Appointments"
+View Toggle: List View | Calendar View (Default: List View for today).
+Filters (Always Visible or in a Collapsible Panel):
+Date Picker (single day, range, or quick options: Today, Tomorrow, Next 7 days).
+Time Slot Filter (e.g., Morning, Afternoon, Evening, or specific hour).
+Patient Name/ABHA ID Search Box.
+Appointment Type Dropdown: All, In-Person, Teleconsultation. **No teleconsult for now, instead: New Patient, Follow-Up Patient
+Status Dropdown: All, Pending Confirmation, Confirmed, Completed, Cancelled, No Show.
+Button: [Apply Filters], [Clear Filters].
+Action Button: [+ Book New Appointment] (opens a modal/form for booking). **This is applicable, the doctor should be able to book an appointment for a patient to follow-up
+List View (Table Format):
+Columns: Time, Patient Name (Age, Gender), ABHA ID, Type (In-Person/Tele)**no tele: first/follow-up instead, Status, AI Summary Preview (first 2 lines, hover for more), Actions.
+Each row is an appointment.
+AI Summary Preview: "Pt c/o fever x3 days, headache. No prev hx of..." **just the post-consult summary which includes combined history and doc notes
+Actions (per appointment, context-dependent based on status):
+If "Pending Confirmation": [Confirm], [Reschedule], [Cancel].
+If "Confirmed": [Start Consultation] (disabled if Dr HPR pending), [Reschedule], [Cancel], [Mark as No Show].
+If "Completed": [View Record].
+If "Cancelled": (No primary actions, maybe "View Details").
+Calendar View: **can be a future feature
+Daily, Weekly, Monthly views.
+Slots visually represented. Appointments shown as blocks within slots.
+Color-coding for appointment type or status.
+Clicking an appointment block shows a pop-over with details and quick actions.
+Clicking an empty slot allows booking for that time.
+Booking New Appointment (Modal/Form):
+Search Patient: By Name, Mobile, ABHA ID. **just wondering if we can have a Siri like assistant, maybe Raj, on the bottom of the screen, that the doctor can just click and talk to when he wants to do an action esp. Any form of typing ie the scribe; searching, pulling stuff up to view for e.g. “hey show me the MRI reports for the consult I had with Rajesh Sharma last week”, and it just takes you there and opens it up, instead of manually searching by typing name/abha id and then clicking it and opening it etc; at least some version of this that eliminates a lot of the manual work, if opening a doc isn't possible, at least if he has recorded a summary of it, or at least it takes the doctor to the location and he can click and open it etc. 
+If an existing patient, auto-fills details.
+If new patient: Fields for Name, Age, Gender, Mobile, Email (ABHA ID creation/linking prompted).
+Select Date & Time (available slots shown).
+Appointment Type: In-Person, Teleconsultation.
+Reason for Visit (optional, text field).
+Button: [Book Appointment].
+Reschedule Appointment (Modal):
+Shows current appointment details.
+New Date & Time Picker (shows available slots).
+Reason for Reschedule (optional, for patient notification).
+Button: [Confirm Reschedule].
+Cancel Appointment (Modal):
+Shows appointment details.
+Reason for Cancellation (Dropdown: Doctor Unavailable, Patient Request, Other - with text field).
+Checkbox: "Notify Patient" (default checked).
+Button: [Confirm Cancellation].
+Notifications:
+Patient:
+Booking Confirmation: "Your appointment with Dr. [Name] on [Date] at [Time] is confirmed. Type: [Tele/In-Person]. Reason: [Reason if provided]." (SMS/In-App/Email). For teleconsult, include a meeting link. **no tele 
+Reschedule: "Your appointment with Dr. [Name] has been rescheduled to [New Date] at [New Time]. Reason: [Reason]. If this time doesn't work, please contact us."
+Cancellation: "Your appointment with Dr. [Name] on [Date] at [Time] has been cancelled. Reason: [Reason]. Please contact us to rebook."
+Doctor/Staff (In-app): If receptionist books/cancels/reschedules for a doctor.
+Configuration Settings (Accessible via "Settings" -> "Appointment Settings"): ** like this stuff can we make it voice-based inputs where relevant
+Working Days: Checkboxes for Mon-Sun.
+Working Hours: Start Time, End Time for each selected working day.
+Appointment Slot Duration: Dropdown (10, 15, 20, 30, 45, 60 minutes).
+Break Times: Define multiple breaks (e.g., Lunch: 1 PM - 2 PM).
+UI: [+ Add Break] -> Start Time, End Time, Days applicable (e.g., Weekdays).
+Maximum Patients Per Day: Number input. (System can auto-block further bookings).
+Booking Window: How far in advance can patients book? (e.g., 30 days). How late can they book for the same day? (e.g., up to 1 hour before slot). **more relevant to have an option, a checkbox, saying I allow walk-ins
+Teleconsultation Settings: Integrated video platform choice (if any), default instructions.**no tele
+Day Off/Block Time:
+UI: Calendar view. Select date(s) or date range.
+Reason: Personal, Surgery, Travel, Conference, Holiday.
+Option: "Cancel existing appointments in this period" (with notification prompt) or "Block new bookings only."
+Button: [Block Time].
+
+Error Scenarios:
+Trying to book in a non-working hour/day or blocked slot: "Selected time is outside working hours or blocked."
+Double booking (if not explicitly allowed with override): "Slot already booked. Choose another time."
+Patient not found during booking: Prompt to create new patient profile.
+
+V. Consultation Interface (The Core)
+(Conditional Access) This entire interface is disabled or inaccessible for doctors with provisional (HPR pending) accounts. A message like "HPR ID verification is required to start consultations" would be shown if they try to access it.
+UI Layout (Three-Panel Design - for fully activated accounts):
+Left Panel: Patient Context Pane (Sticky)
+Patient Demographics: Name, Age, Gender, ABHA ID (clickable, shows QR code, link to view ABHA consent log for this patient).
+Contact: Mobile, Email.
+Visit Reason: (As entered during booking or by patient/receptionist).
+Allergies: Prominently displayed in red/orange. (e.g., "Penicillin, Dust Mites"). [+ Add Allergy] button.
+Chronic Conditions: List. (e.g., "Hypertension, Diabetes Type 2"). [+ Add Condition] button.
+Current Medications: List of active medications.
+Vitals (Latest): Temp, BP, HR, SpO2, RR, Height, Weight, BMI. [+ Add Vitals] button (opens modal for quick entry).
+Past Visit Highlights (Collapsible List):
+Date - Chief Complaint - Diagnosis (e.g., "15-Mar-2024 - Sore Throat - Acute Pharyngitis"). Clickable to open the full past note.
+Linked NDHM Records (Collapsible List, if available, if consent active):
+"Discharge Summary - [Hospital Name] - [Date]"
+"Lab Report - [Lab Name] - [Test Name] - [Date]"
+Clicking opens the document in a viewer.
+Button: [Refresh Consent/Fetch New Records] (if applicable, based on NDHM consent artifact).
+Center Panel: AI Scribe & Clinical Notes (Main Interaction Area)
+Header Controls:
+Patient Name.
+Timer: Consultation Duration (starts automatically).
+AI Scribe Mode Toggle: Dictation Mode | Conversation Mode. **important, if we can’t do both, let us do the one giving better accuracy for now
+Microphone Icon Button: [Start Listening] / [Stop Listening] / [Processing...].
+Language Selection Dropdown (for AI Scribe input, e.g., English, Hindi, Tamil). **ideally should be able to interpret multiple languages instead of one language at a time. For dictation mode, English is a must, everything else not a priority since notes are in English in most cases.
+Content Area (Structured Sections, all editable): **ideally prefilled if patient has used our patient facing app
+Chief Complaint(s): (Text area, AI populates from conversation/dictation).
+History of Present Illness (HPI): (Rich text editor, AI populates).
+Past Medical/Surgical History: (Rich text editor, AI populates or doctor types).
+Family History: (Rich text editor).
+Social History/Lifestyle: (Rich text editor).
+Treatment History
+Summary of the History **this isn’t editable, this should be auto-generated  and auto-updated by our AI agent
+**All relevant inputs, voice-based where possible
+Vitals & Objective Findings:
+Button: [Add Vitals] (modal with fields: Temp, BP Sys/Dia, HR, SpO2, RR, Height, Weight, Blood Sugar, etc. Timestamped).
+General Examination: (Rich text editor, AI populates based on dictation like "Patient appears comfortable," "No pallor or icterus").
+Systemic Examination: (Rich text editor, e.g., "CVS: S1S2 normal, no murmurs. RS: Air entry bilaterally equal, clear.").
+[+ Add Examination Template] (e.g., for specific systems like Neurological, GI).**give the doctor the freedom to add his own sections
+Provisional/Differential Diagnosis: (Text area, AI suggests ICD-10 coded options based on symptoms/findings. Doctor can type, search ICD-10, select multiple). **let us try to integrate ICD-10 or 11, and/or UpToDate to help doctor in this. We do not suggest anything, we just give him the ability to search.
+Final Diagnosis: (Same as above, but for the confirmed diagnosis. Can select from the provisional list). ICD-10 code mandatory for NDHM compliance.
+Investigations Ordered: (See Section VII: Report & Test Management - integrated here).
+Button: [+ Recommend Tests].**Here I will create a catalog of any and all possible investigations that he can select and add, or just give a voice-based input
+Prescription Draft: (See Section VI: Prescription Module - integrated here).
+Button: [+ Add Medication].
+Advice & Plan:
+Lifestyle Advice: (Rich text editor, AI drafts, e.g., "Drink plenty of fluids, take rest").
+Red Flag Signs: (Rich text editor, e.g., "Seek immediate medical attention if fever exceeds 103°F or you experience difficulty breathing").
+Follow-up Instructions: (Rich text editor, AI drafts, e.g., "Follow up in 3 days or SOS").
+Button: [Schedule AI Follow-up] (See Section VIII).
+Referral (if any): (See Section IX).
+Button: [+ Add Referral].
+Notes for Next Visit (Internal): (Text area for doctor's private notes).
+AI Scribe Interaction:
+Dictation Mode: As doctor speaks, text appears in the focused section **but can I say in the findings add this, then go say in the HPI add that, and not have to click on anything(e.g., if the cursor is in HPI, dictation goes to HPI). Supports commands like "Next section," "Add to diagnosis [term]," "Prescribe [drug name]."
+Conversation Mode: Doctor clicks [Start Listening]. AI transcribes patient-doctor dialogue in the background (or a temporary scratchpad visible to the doctor). When [Stop Listening] is clicked, AI processes the transcript and populates the relevant sections.
+Real-time feedback: "Listening..." "Processing..." "Notes updated."**for dictation mode we can update real-time after doctor says something and stops like we do now, but for conversation mode, do we give the entire filled notes after the consult or it is real-time as well
+Confidence scores for AI suggestions (optional).**can do AI suggestions as a future idea
+"Undo AI Suggestion" or "Revert Section" option.
+Right Panel: Clinical Tools & Actions (Contextual) **the idea here is to have UpToDate, ICD API integrated, and I manually get any and all additional tools needed and we can put it here. https://icd.who.int/icdapi https://developer.health-ce.wolterskluwer.com/getting_started 
+**Also can we keep a section here, something like a chatbox/with text output  and voice and text input, where the doctor can ask anything about the patient and it gives it to the doc. For e.g. doc says hey can how has the patient's thyroid hormone levels changed over the last 2 years, and woh last 2 years ka trend batayega. Doc says hey last month when the patient came to me did he have itching over the lesion or not, and it tells the doc the answer.
+Clinical Decision Support (CDS) Alerts: (e.g., "Drug-allergy interaction: Patient allergic to Penicillin, consider alternative for Amoxicillin.")
+Growth Charts (for Pediatrics): WHO/IAP charts, plot height, weight, head circumference.
+Pregnancy Wheel (for OB/GYN).
+Medical Calculators: BMI, BSA, eGFR, etc.
+Templates:
+Button: [Load Note Template] (e.g., "Common Cold," "Diabetes Follow-up").
+Button: [Save as Template] (saves current note structure/content as a new template).
+Consultation Actions:
+Button: [Save Draft] (saves current state, does not lock, does not generate final Rx).
+Button: [Generate Patient Summary] (creates a concise, patient-friendly summary of the visit to share).
+Button: [Approve & Sign]
+Prompts for e-signature (if not auto-applied or if re-authentication needed).
+Locks the record from further edits (unless an addendum process is supported).
+Finalizes prescription (if any), making it ready for dispensing/sharing.
+Marks appointment as "Completed."
+Triggers configured post-consultation actions (e.g., send Rx to pharmacy, send summary to patient).
+Scenarios & Logic:
+Starting a consultation: Fetches patient data, appointment details. Starts timer.
+AI Scribe Language: Must be selectable, with default from doctor's preferences.
+Editing AI Output: All AI-generated text is fully editable. Clicking into a field allows typing. Using voice commands can also append/replace text.
+Internet Connectivity Issues:
+If connection drops mid-consultation: Notify doctor. Allow continued local note-taking (if architected for offline caching). AI Scribe might degrade to local STT if available or pause.
+Attempt to sync when connection restores.
+Teleconsultation Specifics:**no tele
+Center panel might embed a video conferencing tile.
+Screen sharing capability (doctor to patient for explaining reports).
+Chat window with patient.
+Addendum: After signing, if a correction is needed, a formal "Addendum" process should be followed, versioning the record. The original signed record remains, and a new signed addendum is appended.**important, once authorized, any changes to be made should be added separately with a clear tag and the patient should be notified of the same as well
+
+VI. Prescription Module (Integrated within Consultation & Standalone View)
+(Conditional Access) This module is disabled or inaccessible (both integrated and standalone) for doctors with provisional (HPR pending) accounts, as they cannot legally issue or sign prescriptions without a verified HPR ID.
+As part of Consultation Interface (Center Panel - for fully activated accounts):**voice-based input, plus also a text search option for drugs, both by generic and brand name, I will create a catalog of this
+Section: "Prescription"
+UI:
+Table: Drug Name, Strength, Dosage Form, Route, Frequency, Duration, Quantity, Instructions.
+Button: [+ Add Medication]
+Button: [Load Prescription Template] (e.g., for "Viral Fever Rx").
+Button: [Clear All]
+Adding/Editing Medication (Modal or Inline Form):
+Drug Search:
+Input field with auto-complete. Searches comprehensive drug database (e.g., NLEM, MedDRA, CIMS-like).
+Filter by: Generic Name | Brand Name.
+Shows: Drug Name, Manufacturer, Pack Size, Price (if available/configured).
+Once Drug Selected:
+Strength: Dropdown (e.g., 500mg, 250mg - pre-fills based on common forms).
+Dosage Form: Dropdown (e.g., Tablet, Capsule, Syrup, Injection).
+Route: Dropdown (e.g., Oral, IV, IM, Topical).
+Frequency: Dropdown (e.g., OD, BD, TDS, QID, SOS, HS) or custom input (e.g., "1-1-1").
+Duration: Input field + unit (Days, Weeks, Months).
+Timing: Dropdown (Before Food, After Food, With Food, Empty Stomach).
+Quantity to Dispense: (Auto-calculated based on freq/duration, or manually entered).
+Custom Instructions for this drug: (Text field, e.g., "Take with plenty of water").
+Button: [Add to Prescription], [Update Drug].
+AI Assistance:
+Suggests medications based on diagnosis (e.g., "For Acute Pharyngitis, consider Amoxicillin 500mg TDS x 5 days").**let us not do this for now
+Auto-fills dosage/duration for common drugs/conditions.
+Alerts (Critical):**this we can do, give the option to the doctor to override this, but record that the alert was given and doctor ignored
+Drug-Allergy: "WARNING: Patient allergic to [Allergen]. [Drug Name] is a [Allergen Class]."
+Drug-Drug Interaction: "Interaction Alert: [Drug A] and [Drug B] may interact ([Severity Level]: [Effect])."
+Drug-Condition Contraindication: "Contraindication: [Drug Name] is not recommended for patients with [Condition]."
+Duplicate Therapy: "Alert: [Drug Name] belongs to the same class as [Existing Drug on Rx]."
+Dose Check: "High Dose Alert: Recommended dose for [Drug Name] is [X], entered dose is [Y]." (based on age, weight if available).
+General Prescription Instructions: Text area at the bottom of the Rx (e.g., "Review if no improvement in 3 days.").
+Finalizing & Sharing (Post Approve & Sign in Consultation - for fully activated accounts):
+NDHM Compliance:
+Doctor's HPR ID, Registration Number, Digital e-Signature, Timestamp.
+Patient's ABHA ID (if available).
+Facility Name and ID (if any).
+Unique Prescription ID.
+Standardized drug terminologies.
+Output Options (Configurable, or prompted at end of consult):
+Print: Generates a PDF in a standard, legible format. Includes clinic/hospital letterhead (from Admin settings).
+Digital Share (Patient):
+Via ABHA-linked PHR app (preferred NDHM method).
+SMS: Sends a secure link to view/download the PDF.
+Email: Sends PDF as an attachment or secure link.
+Share with Pharmacy (if integrated/consented): Electronically transmit to selected in-house or partner pharmacies.
+Standalone Prescription View (e.g., from Patient History):
+View-only for past prescriptions. Clear indication "This is a past prescription dated [Date]."
+Option to "Re-issue" (creates a new Rx based on the old one, for editing and new signature) or "Print Copy."
+Favorite Prescriptions/Templates: Doctors can save frequently used drug combinations as templates.
+
+VII. Report & Test Management
+(Conditional Access) Recommending tests and viewing/annotating results might be limited or disabled for doctors with provisional (HPR pending) accounts. Viewing basic patient-uploaded reports might be allowed**No, strict no.
+During Consultation (Integrated in Center Panel - for fully activated accounts):**will create a catalog, voice-based inputs by default, manual dropdown selection available if they want to
+Section: "Investigations Ordered"
+Button: [+ Recommend Tests]
+Modal: Recommend Tests/Imaging
+Tabs: Lab Tests | Imaging | Other Procedures.
+Search bar for tests (e.g., "CBC," "Lipid Profile," "X-Ray Chest"). Test list from a master catalog (configurable by Admin, potentially LOINC coded https://loinc.org/ ).
+Test Groups/Panels (e.g., "Fever Panel," "Antenatal Panel").
+Checkbox next to each test to select.
+For each selected test: Optional field for "Clinical Notes/Reason for Test."
+Routing Options (based on facility type):
+Hospitals/Clinics with In-house Lab: Default "Send to In-house [X] Lab."
+Clinics without In-house Lab:
+Dropdown: "Select Diagnostic Partner" (list of admin-configured partners).
+Option: "Patient to Choose Lab" (prints a generic request).**do we keep an option for the doctor to select/recommend an outside lab and book it, or entirely on patient
+Button: [Add Selected Tests to Order].
+Selected tests appear in the "Investigations Ordered" section of the note.
+Doctor's View of Incoming Results (Dedicated Module/Dashboard Widget - primarily for fully activated accounts):
+Navigation Link: "Lab & Imaging Results"
+UI:
+Tabs/Filters: All | Pending Review | Reviewed | Abnormal Results.
+Search: Patient Name, Test Name, Date Range.
+List View (Table):** having second thoughts about a default table view with so many details, could we have a simpler UI, and to view a detailed list let them click on something and view the detailed list
+Patient Name, ABHA ID, Test(s) Name, Order Date, Report Date, Status (Pending, Available, Reviewed by Dr. [Name]), Source (In-house/Partner Lab Name).
+Critical/Abnormal results highlighted (e.g., red icon).**can decide whether to do now or in the future feature
+Clicking a row opens the Report Viewer:
+Patient Details.
+Test Details (Name, Date, Referring Dr).
+For Lab Results (Structured Data - FHIR Observation):
+Parameter, Value, Unit, Reference Range, Interpretation (Normal, Abnormal, Critical).
+Abnormal values color-coded.
+Trend View: Graph icon next to parameters to show historical values if available.
+For Scanned Reports/Imaging (PDF/JPG/DICOM):
+Embedded viewer. DICOM viewer for .dcm files with basic tools (zoom, pan, windowing).
+Doctor's Actions in Report Viewer:
+Button: [Mark as Reviewed] (timestamped).
+Text Area: "Doctor's Annotation/Interpretation Notes" (Saved with the report).
+AI Tool: [Generate AI Interpretation Summary] (AI analyzes structured data or OCRs text from PDF to provide a brief summary, highlights abnormalities. Doctor reviews and edits).**can decide whether to implement now or later, maybe for uploaded pdfs we can, images in the future?
+Checkbox: "Flag for Patient Follow-up / Discussion."
+Button: [Share Highlights with Patient]
+Modal: Shows AI summary/doctor's notes. Option to send via SMS/Email/In-App Message (securely). "Your report for [Test] is ready. Key findings: [Summary]. Please schedule a follow-up if advised."
+Patient receives a simplified, understandable summary.
+Manual Upload of Physical Reports:
+In Patient's Chart or Report Module: [+ Upload External Report]
+Fields: Patient Search, Report Type (Lab/Imaging/Other), Test Name, Date of Report, Issuing Lab/Facility Name.
+File Upload: PDF, JPG, PNG, (limited DICOM support if feasible for uploads).
+Button: [Upload & Save].
+Notifications for Doctor:
+"New Lab Report available for [Patient Name] - [Test Name]."
+"Critical Lab Result for [Patient Name] - [Test Name]: [Parameter] is [Value]." (Urgent notification).
+
+VIII. AI Follow-Up Management
+(Conditional Access) Scheduling and approving AI follow-ups might be disabled or limited for doctors with provisional (HPR pending) accounts, as follow-ups are based on their clinical judgment expressed in a consultation.
+Scheduling during Consultation (Integrated in "Advice & Plan" section - for fully activated accounts):
+Button: [Schedule AI Follow-up]
+Modal: Configure AI Follow-up
+Patient: (Pre-filled).
+Trigger Condition: (e.g., Post-Consultation, Post Lab Report Review).
+Timing:
+Dropdown: "X days after consult," "X days after report," "Specific Date."
+Input: Number of days / Select Date.
+Channel: Dropdown: Automated SMS, Automated Voice Call (IVR), WhatsApp Message (if supported & consented). **you guys decide which ones can we do now and which one in the future
+Content/Script (Templates available, editable):
+First before any of the following is to create a list of anticipated QnA and get it approved
+For SMS/WhatsApp: "Hi [Patient Name], this is an automated ** we need to clearly make the agent say that it is AI to comply with guidelines follow-up from Dr. [Doctor Name]'s clinic regarding your visit on [Date]. How are you feeling regarding your [Condition/Symptom mentioned in consult, e.g., 'headaches']? Reply: 1-Better, 2-Same, 3-Worse, 4-Need help…." **script I can decide later when you guys are building this functionality
+For Voice Call: AI agent script: "Hello [Patient Name], this is an automated call from Dr. [Doctor Name]'s clinic... How are your [symptoms] now? Press 1 for Better, 2 for Same, 3 for Worse, or press 4 to request a callback."
+Variables: [Patient Name], [Doctor Name], [Consult Date], [Symptom/Condition].
+Red Flag Routing: If a patient selects "Worse" or "Need help," what happens?
+Dropdown: "Notify Doctor Assistant," "Create Task for Doctor Review," "Suggest Rescheduling Consult."**flow for this I will decide and let you know; I’m thinking if the patient needs to convey something, report symptoms, or any other actions except doubts being cleared under the information authorized by the doctor, we will ask the patient to go use the app, also the transcripts of the call, or maybe the call itself needs to be recorded? And if so, that also has to be mentioned to the patient during the call that it is being recorded, before starting the actual content.
+Button: [Schedule Follow-up].
+Doctor's AI Follow-up Dashboard/Module (Primarily for fully activated accounts):
+Navigation Link: "AI Follow-ups"
+UI:
+Tabs: Scheduled | Pending Approval (if admin sets up templates needing doc approval) | Completed | Action Required.
+Filters: Patient Name, Date Range, Status.
+List View (Table for "Scheduled" / "Completed"):
+Patient, Scheduled Time, Channel, Message Content (Preview), Status (Sent, Delivered, Responded, Failed).
+For "Completed": Patient Response (raw & AI summarized, e.g., "Patient reported feeling 'Better'."), Action Taken (if any).
+List View (Table for "Action Required"):
+Patient, Response Trigger (e.g., "Replied 'Worse'"), AI Summary of Interaction, Suggested Action.**basically we ask the patient if he needs to report something he comes to the app and does it and unless an emergency where the agent asks the patient to go to the emergency room, the information is transmitted to the doctor (well also notify the doctor when you advice to go to the emergency room)
+Actions: [Mark as Reviewed], [Create Task for Assistant], [Initiate Callback], [Schedule New Appointment].
+Doctor Approval Workflow (Optional, if Admin configured - for fully activated accounts):
+If AI generates follow-up suggestions based on triggers (e.g., 2 days after every "viral fever" diagnosis), these appear in "Pending Approval."
+Doctor reviews: Patient, suggested message, timing.
+Actions: [Approve], [Edit & Approve], [Decline].
+Patient Interaction:
+Receives message/call.
+Responds via defined options.
+If "request callback," the system logs it and notifies staff/doctor as configured.
+AI Summarization: For text responses or transcribed voice responses, AI provides a concise summary for the doctor.
+
+IX. Referral & Collaboration (For Hospitals)
+(Conditional Access) Initiating referrals might be disabled for doctors with provisional (HPR pending) accounts. They might be able to receive and view referral information if a patient is assigned to them.
+Initiating Referral (During Consultation, in "Referral" section - for fully activated accounts):
+Button: [+ Add Referral]
+Modal: Create Referral
+Referring To:**very imp: if the doctor being referred to is not on the platform, ability to create a referral module and share on whatsapp, email, or any other relevant medium for the other doctor to onboard on our app and accept the referral, also build a referral option on the patient side.
+Dropdown: Department (e.g., Cardiology, Neurology - list from Admin setup).
+Dropdown: Specialist Doctor (Filters based on selected department. Shows doctor's name, specialization).
+Option: "Any Available Doctor in [Department]."
+Reason for Referral: (Rich text field, required).**basically any place where text is needed to be entered, make it voice-based
+Urgency: Dropdown (Routine, Urgent, Emergency).
+Attach Documents (from current patient's record):
+Checkbox list: Current Consultation Note, Past Consultation Notes (selectable), Lab Reports (selectable), Imaging Reports (selectable).
+Specific Questions for Consultant (Optional): (Text area).
+Button: [Send Referral].
+Tracking Referrals (Referring Doctor's View - for fully activated accounts):
+List View: Patient Name, Referred To (Dept/Dr), Date Sent, Status (Sent, Acknowledged by Dept/Dr, Appointment Scheduled with Consultant, Consultation Completed by Consultant, Notes Received from Consultant, Cancelled).
+Clicking a referral shows details and history.
+Receiving Doctor's (Consultant's) View (in their Dashboard/Appointments):
+Notification: "New Referral Received from Dr. [Referring Dr Name] for Patient [Patient Name]."
+Referral appears in a dedicated "Incoming Referrals" queue.
+Referral Details View:
+Patient Details, Referring Doctor Details, Reason for Referral, Urgency, Attached Documents (viewable).
+Actions:
+[Acknowledge Receipt] (changes status for referring doctor).
+[Schedule Appointment for Patient] (integrates with their appointment system).
+[Decline Referral] (with reason - e.g., "Out of scope," "Insufficient information").
+Once consultation is done: [Complete Referral & Send Notes]
+Opens a mini-consultation note form specifically for referral feedback.
+Fields: Diagnosis, Findings, Recommendations, Medications prescribed (if any).
+Button: [Send Notes to Referring Doctor].
+Seamless Loop:
+Referring doctor receives notification: "Consultant notes received for Patient [Patient Name] from Dr. [Consultant Name]."
+Notes are attached to the patient's record and visible in the referral tracking.
+Cross-Departmental Communication: Internal messaging system might also be used for quick queries related to referrals. **relevant for multispecialty platforms (category 2 and 3 of our healthcare provider classification)
+
+X. Settings and Preferences (Doctor's Personal Settings)
+Accessible via Profile Icon -> "Settings"
+UI (Tabbed Interface):
+Tab 1: Profile
+View/Edit: Full Name (as per HPR, may sync from HPR), Display Name.
+HPR ID: (Text field, becomes editable if empty or verification failed. If verified, shows ID and "Verified" status with a green check).
+Button: [Verify HPR ID] (active if ID field has input and status is not "Verified").
+If HPR ID is pending/failed: Message "Your HPR ID is required for full functionality. Please enter and verify your HPR ID." Links to HPR registration guidance if needed.
+Registration Number (from HPR, non-editable if HPR verified).
+Specialization(s) (from HPR, potentially add sub-specializations if system supports).
+Years of Experience.
+Contact: Mobile (editable, may require OTP verification if changed), Email (editable, may require verification).
+Profile Picture: Upload/Change.
+Digital Signature: Upload/Replace (JPG/PNG). Preview. (Disabled if HPR ID not verified).
+Tab 2: Consultation Preferences**we need a section where the doctor can add custom services, from our side we will just keep a default consultation as the service(maybe first consult, and follow-up consult, rest as additional custom services); doctor can decide for X service he charges M, add a new custom service Y for which he charges N etc
+Default Consultation Duration (for new bookings made by this doctor): Dropdown (e.g., 15, 20, 30 mins). This can be overridden by Admin global settings or per appointment. (May be view-only or limited if HPR is pending).
+Default Appointment Days & Hours: (View current schedule set by Admin or self. Link to full Appointment Configuration if Solo).
+AI Scribe Language Default: Dropdown (English, Hindi, etc.).
+Preferred Note Templates: List of created templates, reorder, delete. (Creating new templates disabled if HPR pending).
+Preferred Prescription Templates: List, reorder, delete. (Creating new templates disabled if HPR pending).
+Tab 3: Notification Preferences
+Checkboxes for various event types and channels (In-App, SMS, Email):
+New Appointment Booked for me.
+Appointment Cancelled/Rescheduled.
+New Lab Result Ready for Review.
+Critical Lab Result.
+Patient Message Received.
+AI Follow-up Action Required.
+Referral Updates.
+System Announcements from Admin.
+Quiet Hours (Do Not Disturb): Set time range when notifications (except critical) are silenced.
+Tab 4: Security & Access
+Change Password.
+Configure 2FA (Enable/Disable, Setup with Authenticator App, Manage Recovery Codes).
+View Login History (Date, Time, IP Address, Device Type).
+ABHA Consent Logs: View a list of consents managed for patients by this doctor. (Patient Name, Consent Purpose, Status, Expiry). This is a filtered view of the broader consent logs accessible by Admin.
+Tab 5: Data & Export
+Download My Activity Summary:
+Date Range Picker.
+Content: Consultation count, prescription count, types of cases seen (aggregated, de-identified if for external use). (May be limited if HPR is pending).
+Format: PDF, CSV.
+Export Patient Files (FHIR Format):
+Requires explicit consent from the patient for each export instance if sharing outside.
+Search for patients.
+Select patient -> [Request Consent for Export] (if NDHM consent manager integrated).
+Once consent given (or if for doctor's own attested copy): [Export FHIR Bundle] (generates a ZIP file). (This action is likely disabled if HPR is pending as the doctor cannot fully attest to records).
+Tab 6: Language & Region
+Interface Language: Dropdown for EHR UI language.
+Date/Time Format: (e.g., DD/MM/YYYY, MM/DD/YYYY).
+Currency: (If fees are displayed, default INR).
+
+XI. Compliance Built-In by Default
+FHIR R4: All patient clinical data (problems, encounters, medications, allergies, observations, diagnostic reports) structured as FHIR resources.
+E-Signature: Every finalized consultation note, prescription, and significant report review is digitally signed by the doctor (HPR ID linked) with a timestamp. Uses DSC token or Aadhaar eSign as per legal requirements. This is contingent on a verified HPR ID.
+Patient Consent (NDHM Framework):
+No sharing of identifiable patient data with any third party (including other doctors not directly in the care team for that episode, or external systems) without explicit patient consent obtained via an NDHM-compliant Consent Manager.
+Consent artifacts are stored, auditable, and revocable by the patient.
+For internal viewing (e.g., doctor viewing their own patient's past records), consent is implied by the patient-doctor relationship for direct care, but this should be in the T&C.
+HPR ID & HFR ID Verification: Doctor identity is established and continuously validated against the HPR. Facility identity is established and validated against HFR. Only verified doctors can sign clinical documents for a verified facility.
+Data Privacy: Adherence to DISHA (Digital Information Security in Healthcare Act) principles, even if not fully enacted, and Personal Data Protection Bill provisions.
+Audit Trails: Comprehensive logging of data access, modifications, exports.
+
+Admin Interface – Complete Blueprint
+Who is the Admin?
+The admin is the operational head of a healthcare facility (clinic owner, hospital IT lead, or practice manager). For solo practices, the doctor plays this role (their interface combines Doctor + Admin functions; HPR ID verification is paramount). For group practices or hospitals, it is a separate login. The admin interface adapts based on facility size selected during onboarding.
+Admins do not access clinical data by default, unless explicitly given permission through a "Super Admin" role or a dual Doctor-Admin role with appropriate HPR verification for the doctor component. Their primary role is to set up, manage, and monitor the operational scaffolding of the platform.
+
+I. Facility Setup & Configuration (Admin Dashboard - Initial View / Settings Area)
+Admin Dashboard Overview (Home Screen for Admin):
+Headline: "Facility Overview: [Facility Name]"
+Key Metrics Cards:
+Total Doctors Onboarded: [Number] ([Manage Doctors])
+Active Specialties: [List/Count] ([Manage Specialties])
+Departments (Hospitals): [Number] ([Manage Departments])
+Appointments Today/This Week/This Month: [Number]
+System Setup Checklist/Progress Bar:
+Facility Details: (Complete/Pending)
+Facility ABHA ID (HFR ID): (Status: Verified / Pending Verification / Not Provided - [Add/Verify ID])
+Doctor Onboarding: ([X]/[Y] Doctors with Verified HPR ID)
+Working Hours & Slots: (Configured/Pending)
+Lab Partner Integration: (Setup/Not Added)
+Pharmacy Partner Integration: (Setup/Not Added)
+NDHM Compliance Status: (e.g., HPR for all active docs verified, HFR ID verified).
+Quick Actions Sidebar/Section:
+[Add New Doctor]
+[Manage Staff Accounts]
+[View Appointment Schedule (All Doctors)]
+[Configure Facility Settings]
+[View Reports & Analytics]
+Facility Settings Page (Accessed via [Configure Facility Settings] or sidebar):
+1. Basic Information:
+Facility Name (Editable)
+Facility Type (Dropdown: Clinic, Nursing Home, Hospital, Diagnostic Center - as selected in onboarding, may be restricted from change).
+Facility Address: Street, City, Pincode, State, Country (Editable, with map pin).
+Contact Information: Main Phone Number, General Email.
+Facility ABHA ID (HFR ID): (Text Field).
+Status Display: (e.g., "Verified with HFR", "Verification Failed", "Not Provided. Please add and verify.").
+Button: [Verify ID] (if ID entered but not verified) or [Add & Verify ID] (if field is empty).
+Link: What is a Facility ABHA ID? / How to register on HFR? (Opens a modal with guidance and link to the official HFR portal, similar to the onboarding HFR guidance).
+Facility Registration Number / License Number (as applicable locally).
+2. Branding & Communication:
+Upload Facility Logo (for login screen, printed documents like prescriptions, bills).
+Letterhead Configuration: Header text/image, Footer text (for printed prescriptions, reports, bills). Preview option.
+Default Patient Communication Language (can be overridden by patient preference or doctor settings).
+3. Operational Hours & Holidays:
+Define General Facility Working Hours (e.g., Mon-Fri 9 AM - 7 PM, Sat 9 AM - 1 PM). (This is a general envelope; individual doctor hours can vary and are set in Doctor Management).
+Manage Holidays:
+List of upcoming holidays. [+ Add Holiday] button.
+Modal: Holiday Name, Date (or Date Range), Type (Full Day Closure, Half Day).
+Option: "Auto-cancel existing appointments on this holiday" (with patient notification workflow).
+4. Departments (Primarily for Hospitals/Large Clinics):
+List of existing departments. [+ Add Department] button.
+Modal: Department Name (e.g., Cardiology, Pediatrics, General Medicine), Head of Department (optional, select from onboarded HPR-verified doctors).
+5. Specialties Offered:
+List of specialties (primarily derived from onboarded doctors' HPR specializations, admin can also add manually if needed for tagging services or non-HPR staff roles). [+ Add Specialty] button.
+Modal: Specialty Name (standardized list if possible, or free text).
+
+II. Doctor & Staff Management
+Navigation: "Users" -> "Doctors" / "Staff"
+Doctor Management Screen:
+List View (Table): Doctor Name, HPR ID (Value / "Pending Input by Doctor"), HPR Status (e.g., Pending HPR Verification, HPR Verified & Active, Provisional - HPR Pending Input, HPR Verification Failed, Disabled), Specialization, Mobile, Email, Assigned Admin Role (Yes/No), Actions.
+[+ Add New Doctor] Button:
+Modal: Add Doctor
+Full Name (Required)
+Mobile Number (Required, for login & communication)
+Email Address (Required, for login & communication)
+HPR ID: (Text Field, optional at this stage for admin to input)
+Tooltip: "Enter doctor's 14-digit HPR ID if known. If unavailable or if the doctor needs to register, check the box below."
+Checkbox/Link: [ ] Doctor does not have an HPR ID yet / Needs HPR registration guidance.
+Specialization (Dropdown, or auto-fills after HPR verification if HPR ID is provided and verified).
+Assign to Department(s) (for hospitals, multi-select from configured departments).
+Role: "Doctor." Option: "Grant Admin Privileges" (Yes/No - if yes, this doctor also gets admin access).
+Initial Password Setup: Option for system-generated password (emailed to doctor) or prompt doctor to set password on first login via invitation link.
+Button options based on HPR ID input and checkbox:
+If HPR ID entered by admin and checkbox is unchecked: [Send Invitation & Initiate HPR Verification]
+If HPR ID field is empty OR checkbox "Doctor does not have HPR ID yet" is checked: [Send Invitation with HPR Registration Guidance]
+Sub-Flow (Admin Adding Doctor): HPR ID is provided by Admin (checkbox unchecked):
+Admin clicks [Send Invitation & Initiate HPR Verification].
+System sends an invitation email to the doctor with a link to activate their EHR account and set/confirm password.
+Simultaneously, the backend queues the provided HPR ID for an API call to the HPR Registry for verification.
+Doctor's status in the admin list: "Invited - HPR Verification Pending."
+HPR Verification Outcome (reported to Admin and reflected in Doctor's status):
+Success: HPR returns verified details (Name, Specialization). Doctor's EHR profile is updated/confirmed with these. Status changes to "Active - HPR Verified." Doctors can log in with full clinical features enabled. Admin is notified of successful verification.
+Failure: Error message from HPR API (e.g., ID not found, invalid, name mismatch). Status changes to "HPR Verification Failed." Doctor's EHR account remains provisional/limited. Admin is notified and can contact the doctor to correct the HPR ID (which can be re-entered in the doctor's profile by admin or doctor) or guide them to complete HPR registration. The doctor also sees HPR pending/failed status on their login.
+Sub-Flow (Admin Adding Doctor): HPR ID not provided by Admin OR checkbox "Doctor does not have HPR ID yet" is checked:
+Admin clicks [Send Invitation with HPR Registration Guidance].
+The HPR ID field input in the modal is ignored or cleared if the checkbox is checked.
+System Action:
+An invitation email is sent to the doctor. This email includes:
+A link to activate their EHR account and set up their password, leading to a provisional EHR account.
+Clear instructions and a direct link to the official HPR registration portal (similar to Sub-Flow 1.1.2 guidance during doctor self-onboarding).
+A clear statement that full EHR functionality (especially clinical actions like prescribing and digitally signing documents) requires a verified HPR ID, which they must obtain and then add to their EHR profile settings.
+The doctor's status in the Admin's list: "Invited - Provisional (HPR Input Pending by Doctor)."
+Doctor's Experience:
+Doctor receives the email/WhatsApp, activates their provisional EHR account.
+The EHR interface is limited, with prominent CTAs prompting them to add and verify their HPR ID in their profile settings.
+Doctor follows guidance to register on the HPR portal and obtains their HPR ID.
+Doctor logs into their EHR, navigates to their profile settings, enters their HPR ID, and triggers verification.
+System verifies HPR ID. If successful, their account is fully activated. Admin sees the status change to "Active - HPR Verified" in the Doctor Management list.
+Actions (per doctor in list):
+[Edit Profile]: Admin can update doctor's contact info, department, roles. If HPR ID verification fails, admin can re-enter/correct the HPR ID here and trigger a re-verification attempt.
+[View Schedule/Config Schedule]: Define/modify doctor's working days, hours, slot duration, breaks (overrides facility defaults if needed).
+[Upload Signature (on behalf)]: Admin can upload a doctor's pre-existing digital signature image file (JPG/PNG). This is for display/print purposes only and is separate from the DSC/Aadhaar eSign for NDHM. (This option is disabled if the doctor's HPR is not verified, as signing privileges are linked to HPR).
+[Disable Account]: Temporarily deactivates doctor's login. Option to reassign upcoming appointments.
+[Enable Account]: If disabled (may prompt HPR re-check if status was an issue related to HPR suspension).
+[Reset Password]: Sends a password reset link to the doctor's registered email.
+[View Activity Log]: Shows doctor's login history and key actions within the EHR.
+[Resend Invitation / HPR Guidance] (This option is available if the doctor is still in a "Invited - Provisional (HPR Input Pending)" or "HPR Verification Failed" state, to resend the relevant instructions).
+Staff Management Screen (Receptionist, Nurse, Lab Manager, Pharmacy Handler, etc.):
+List View (Table): Staff Name, Role, Mobile, Email, Status (Active, Disabled), Last Login, Assigned Department(s), Actions.
+[+ Add New Staff Member] Button:
+Modal: Add Staff
+Full Name, Mobile, Email.
+Role (Dropdown: Receptionist, Nurse, Lab Officer, Pharmacy Officer, Billing Clerk, Junior Admin, Custom Role).
+Selecting a standard Role pre-fills a default set of permissions (see Role & Permission Management).
+Assign to Department(s) (optional, multi-select).
+Initial Password Setup options (system-generated or user sets on first login via invite).
+Button: [Create Staff Account & Send Invite].
+Actions (per staff in list):
+[Edit Profile]: Update contact details, role, department.
+[Manage Permissions] (If assigned a custom role, or to fine-tune permissions for a standard role, within limits defined by Super Admin).
+[Disable Account].
+[Enable Account].
+[Reset Password].
+[View Activity Log].
+
+III. Appointment & Scheduling Control (Facility-Wide)
+Navigation: "Appointments" -> "Global Schedule" / "Settings"
+Global Schedule View:
+Calendar (Daily, Weekly, Monthly views). Option to filter by Doctor(s), Department(s), Appointment Type (In-Person/Teleconsult).
+Shows all appointments across the facility. Color-coded by doctor or appointment status.
+Admin can click on appointments to view details.
+With appropriate permissions, Admin can:
+Book new appointments for any doctor.
+Reschedule or cancel appointments on behalf of a doctor or patient (all such actions are logged with "by Admin [AdminName]").
+Mark patients as "Checked-in" or "No Show."
+Appointment Settings (Global Defaults, can be overridden per doctor):
+Default Consultation Slot Duration (e.g., 20 mins).
+Appointment Buffer Time (e.g., 5 mins automatically added between slots for changeover).
+Facility-Wide Daily Patient Booking Limit (optional, can trigger alerts or auto-block further bookings once reached).
+Teleconsultation Platform Configuration:
+Select integrated platform (if multiple) or enter details for a generic one.
+Default patient instructions template for teleconsultations (e.g., "Join using this link 5 minutes before your appointment...").
+Walk-in Patient Policy:
+Enable/Disable walk-in bookings by reception staff.
+Assignment Logic for Walk-ins: Manual assignment by reception, Round-robin to available doctors in relevant specialty, Doctor with shortest current queue.
+Automated Reminder Settings (facility-level templates and timing):
+Appointment Confirmation message template (SMS/Email/WhatsApp).
+Reminder X hours/days before appointment: Template and sending schedule.
+Option to include a link for patients to confirm or request reschedule (if patient portal exists).
+Post-appointment feedback survey link (optional, if feedback module is used).
+Queue Management (Real-time view for facilities with physical queues, typically used by Reception):
+Dashboard displaying: Doctor Name, Current Patient in Consult, Next 3-5 Patients Waiting (with appointment time and check-in time), Estimated Wait Time for each doctor.
+Receptionists can update patient status: "Patient Arrived/Checked-in," "Patient Called In/With Doctor," "Consultation Ended/Patient Exited."
+Visual alerts for long wait times.**real-time updates to the patient interface if the appointment is late due to previous appointments etc.
+
+IV. Pharmacy & Diagnostic Partner Management **restrict voice based AI to only the doctor (includes the doctor in the labs/radio centres) and patient, other places just keep the interface intuitive, not too complex
+Navigation: "Integrations" -> "Pharmacy Partners" / "Diagnostic Labs"
+In-House Pharmacy Module (if applicable, for facilities with their own pharmacy):**can we keep all these labs, pharmacies etc as a modular thing if that makes sense, so that if needed we can just create a separate interface when selling to independent labs, pharmacies etc. Or another option is that in the first screen where we ask the provider to select whether it is a small clinic, mid size hospital, large hospital etc, we can also add options of I am an independent pharmacy, lab etc.
+Inventory Management (Optional, can be basic or integrate with a dedicated HIS/Pharmacy system via API):
+Add/Edit Medicines: Name, Generic Name, Manufacturer, Batch No., Expiry Date, Current Stock Quantity, Unit Price, Reorder Level.
+Low Stock Alerts (notifications to Pharmacy Officer/Admin).
+Stock In/Out tracking.
+Dispensing Queue:
+Electronically transmitted prescriptions (from HPR-verified doctors, after patient consent if required) appear here.
+List View: Patient Name, Prescription ID, Doctor Name, Date, Status (Pending, Partially Dispensed, Dispensed, Cancelled).
+Pharmacists can view prescription, verify, dispense medicines, update stock, and mark as "Fulfilled" or "Partially Fulfilled" (with notes).
+Staff Assignment: Assign "Pharmacy Officer" role to relevant staff members managing this module.
+In-House Lab Module (if applicable, for facilities with their own laboratory):
+Test Catalog Management:
+Add/Edit Lab Tests: Test Name, Short Code, LOINC Code (if available), Department (Pathology, Microbiology etc.), Specimen Type(s) required, Test Price, Normal Turnaround Time, Reference Ranges (configurable by age/gender if needed).
+Group tests into Panels (e.g., "Fever Panel," "Annual Health Check Panel").
+LIS Integration (if facility has an existing LIS) or Internal Order Queue:
+Test orders from doctors (digitally signed) appear in the queue.
+List View: Patient Name, Order ID, Tests Ordered, Doctor Name, Order Date, Status (Sample Pending, Sample Collected, In Process, Results Ready for Validation, Results Published).
+Lab Officer/Technician can manage: Sample Collection (log specimen details, print barcodes), Processing, Result Entry (structured data entry for individual parameters or upload of PDF reports from analyzers), Validation by pathologist/senior tech.
+Validated results are pushed back to the EHR and become available in the doctor's interface and patient portal (if applicable, with consent).
+Staff Assignment: Assign "Lab Officer" or "Lab Technician" roles to relevant staff.
+External Partner Management (for tie-ups with external Pharmacies/Labs):
+List View (Table): Partner Name, Type (Pharmacy/Lab), Contact Person, Phone, Email, Address, MOU (Uploaded Document link), Status (Active/Inactive), NDHM-Verification Status (if applicable), Actions.
+[+ Add New Partner] Button:
+Modal: All details above. Fields to upload MOU/Agreement (PDF).
+Checkbox: "NDHM-Verified Partner" / Field for Partner's HFR ID (if lab/pharmacy is on NDHM network).
+Integration settings (if digital integration via API is supported by partner): API endpoint, credentials, supported data formats.
+Actions: [Edit Partner Details], [Activate/Deactivate Partner].
+Notification Flow Configuration (Requires patient consent for data sharing):
+Checkbox option: "After consultation ends, if a prescription is issued, automatically notify [Selected Preferred Pharmacy Partner(s)] about the new prescription?"
+Checkbox option: "When a lab test order is created, automatically notify [Selected Preferred Diagnostic Lab Partner(s)] about the new order?"
+Admin can set a facility-preferred partner or allow doctors to choose from the active list during consultation.**important point, should  keep this feature for small clinics where the doctor decides, mid size clinics and large hospitals(mostly in house)
+
+V. Consent & Record Governance
+Navigation: "Compliance" -> "Consent Management" / "Record Audit"
+Consent Management Dashboard (Interfacing with NDHM Consent Manager):
+Overview Metrics: Total Consents Logged via EHR, Active Consents, Expired Consents, Revoked Consents (related to this facility/HIP).
+List View (Table of Consent Artifacts): Patient ABHA ID/Name, Consent ID (from NDHM CM), Purpose of Consent (e.g., Share records with Dr. X for consultation, Link health records from Lab Y), Granted To (HIP ID - this facility, HIU ID - requesting entity), Status (Granted, Expired, Revoked, Denied, Requested), Grant Date, Expiry Date, Actions.
+Actions (on consent artifacts, where applicable by NDHM rules): [View Details] (shows full consent artifact XML/JSON). Direct modification of NDHM consents is not possible; revocations/expiries are managed by patient/CM.
+NDHM Consent Manager Event Log:
+A log of all consent-related events received from the NDHM Consent Manager (e.g., "Patient [ABHA ID] revoked consent [Consent ID]," "Consent [Consent ID] expired").
+Admin should be alerted to significant events like widespread revocations or repeated errors.
+System must automatically honor revocations by restricting data access based on the consent status.
+Facility Consent Policies (Internal Configuration for EHR behavior):
+Default consent duration for specific internal purposes (if not explicitly defined by the patient via NDHM during a specific consent request, e.g., consent for internal AI follow-up).
+Policy for data access in emergency ("Break-Glass Procedure"):
+Define roles authorized to initiate Break-Glass.
+Define justification categories required.
+All Break-Glass access instances are heavily audited and flagged for review.
+Record Governance & Audit Trail:
+Record Retention Policy Configuration:
+Admin can set the system's default record retention period (e.g., X years as per Clinical Establishments Act or other state/national regulations).
+Policy for how records older than this period are handled (e.g., flagged for archival, moved to cold storage, or (if legally permissible and configured) anonymized or deleted).
+Comprehensive Audit Log Viewer:
+Filters: User (Doctor/Staff/Admin Name or ID), Patient Record Accessed (Patient Name or ABHA ID), Action Type (View, Create, Edit, Delete, Export, Print, Sign, Consent Change, Login, Logout, HPR/HFR Verification Attempt etc.), Date Range, IP Address, Module Accessed.
+Table Display: Timestamp, User, User Role, Patient ID/Name Affected (if applicable), Action Performed, Details of Action (e.g., "Viewed consultation note ID 123," "Edited prescription ID 456: Changed drug Amoxicillin 250mg to 500mg," "Admin User XYZ disabled Dr. ABC's account").
+Option to export audit logs (CSV/PDF) for specific periods or filtered criteria, for internal reviews or external audits.
+Emergency Access Log ("Break-Glass" Log): A dedicated, easily accessible log specifically for any access made under emergency protocols. Shows who accessed what patient data, when, the justification provided, and who authorized it (if applicable).
+
+VI. Facility-Wide Reporting & Insights
+Navigation: "Analytics" -> "Operational Reports" / "Clinical Reports" (Aggregated/De-identified)
+Dashboard with Customizable Widgets & Pre-defined Reports:
+Operational Reports:
+Appointment Volume: Trends by Doctor, By Department, By Day/Week/Month (Line charts, Bar charts). Comparison with previous periods.
+Patient Wait Times (if queue management used): Average wait time, Peak wait times, Wait time distribution.
+No-Show Rates: Overall facility rate, by Doctor, by Appointment Type.
+Resource Utilization: Doctor availability vs. booked slots. Room utilization (if rooms are managed resources).
+Billing & Revenue Reports (if billing module integrated): Total collections, outstanding payments, revenue by doctor, revenue by service/department.
+HPR/HFR Verification Status Report: Number/percentage of doctors with verified HPR IDs, status of facility HFR ID.
+Clinical & AI Usage Reports (Aggregated, De-identified for clinical patterns, focusing on trends and quality improvement):
+Prescriptions Issued: Total count, by Department, by Doctor. Most commonly prescribed generic drugs (Top 20).
+AI Scribe Usage: Number of consultations using AI Scribe, percentage of notes primarily AI-generated vs. manually typed, average AI suggestion override/edit rates (to gauge AI accuracy and utility).
+AI Follow-up Performance: Number of AI follow-ups scheduled/completed, patient response rates, breakdown of patient-reported outcomes (Better/Same/Worse percentages).
+Top Diagnosed Conditions: Frequency of ICD-10 codes used (aggregated, de-identified) by department and facility-wide. Trends over time.
+Lab Test Turnaround Times (TAT): Average time from lab order to result availability, broken down by test or department.
+System Adoption & Compliance Reports:
+User Login Frequency / Last Login details for Doctors and Staff.
+Percentage of Patients with verified ABHA IDs linked to their records.
+Consent status overview: Number of active vs. expired/revoked consents.
+Report Generation & Export:
+User selects Report Type from a list.
+Applicable filters appear (e.g., Date Range, Doctor, Department, Specialty, etc.).
+Generate reports for on-screen viewing (with charts and tables).
+Export options: PDF (for formatted reports), CSV/Excel (for raw data).
+Option to schedule frequently needed reports to be auto-generated and emailed to specific admin users or roles.
+
+VII. EHR & Data Export Control
+Navigation: "Data Management" -> "Export" / "Integrations"
+Data Export Options:
+Bulk Patient Data Export (FHIR R4 Format):
+Purpose: Regulatory audit, data migration to another system, comprehensive facility backup.
+Requires Super Admin rights and potentially multi-factor authentication for this specific action due to its sensitivity.
+Prominent Warning: "This action will export ALL patient data from the selected cohort. Ensure full compliance with data privacy regulations (e.g., DPDP Act) and obtain necessary patient consents if data is intended to leave secure facility control or be used for non-direct care purposes."
+Filtering Options for Cohort Selection: Date range of patient activity, specific doctor(s), specific department(s).
+Output Format: Encrypted ZIP file containing FHIR bundles (one bundle per patient or larger bundles). A clear key management process for decryption must be defined and followed.
+Individual Patient Record Export (FHIR R4 Format):
+Primarily a doctor-initiated function (with patient consent for sharing).
+Admin may assist in specific scenarios (e.g., patient directly requests their complete record from the facility administration). This still requires robust verification of patient identity and documented consent.
+Integration Management (For connecting with external HIS, LIS, ERP, or other third-party systems):
+API Key Management:
+Interface to generate, view, revoke, and manage API keys for secure external system integrations.
+For each API key, define its scope and permissions (e.g., read-only access to appointments, write access for lab results, specific FHIR resource access).
+Log of API key usage.
+SFTP Configuration (for batch data exchange):
+Setup and manage SFTP server details (host, port, username, key-based authentication) for automated data flows (e.g., daily batch of anonymized data for research, or import of financial data).
+Integration Logs & Monitoring:
+View logs of all inbound and outbound API calls, data synchronization statuses, and any errors encountered during integration processes.
+Dashboard to monitor the health and performance of connections to external systems and NDHM services (e.g., HPR, HFR, UHI, ABDM Gateway). API uptime, average response times, failed transaction counts.
+
+VIII. Regulatory & Compliance Panel
+Navigation: "Compliance" -> "Dashboard" / "Settings"
+Centralized View of Key Compliance Status Indicators:
+HPR Verification Status: [X] out of [Y] Onboarded Doctors have Verified HPR IDs. Link to Doctor Management, highlighting doctors with pending, failed, or missing HPR IDs.
+Facility ABHA ID (HFR ID) Status: Linked & Verified / Pending Verification / Not Provided. Button/link to [Manage Facility ID] in Facility Settings.
+Patient ABHA ID Coverage: Percentage of active patients with verified ABHA IDs linked to their records.
+Consent Management Framework: Status (e.g., "NDHM Consent Manager Integration: Active & Healthy"). Link to Consent Logs.
+Digital Signature Usage Log: Quick access to audit trail filtered for digital signature events (who signed what document and when).
+Data Breach Reporting Mechanism:
+Link to the facility's internal SOP/policy document for breach identification, management, and reporting.
+A secure internal form to log a suspected or confirmed data breach (for DPO/Admin investigation and record-keeping). Fields: Date of discovery, nature of breach, systems/data affected, initial actions taken.
+Contact information for relevant authorities (e.g., CERT-In, future Data Protection Board).
+Data Protection Officer (DPO) Contact Information:
+Fields to enter and display the appointed DPO's Name, Email, Phone number (if DPO is appointed by the facility).
+Compliance Checklist (Admin can customize this list based on facility needs and local regulations):
+Example Items with status tracking (e.g., Complete, In Progress, Pending, Not Applicable):
+NDHM Service Integrations (HPR, HFR, UHI, Consent Manager): (Status for each)
+Staff Training on Data Privacy & Security: (Last Conducted: [Date]) [Upload Training Attendance/Record]
+Data Backup & Recovery Policy: (Policy Documented: Yes/No) (Last Tested: [Date]) [View/Upload Policy Doc]
+Physical Security Measures Audit: (Last Audit Date: [Date]) [Upload Audit Report]
+Compliance with Clinical Establishments Act (Registration, Standards): (Status/Next Renewal)
+
+
+Each checklist item can have a status, notes, due dates, responsible person, and linked documents.
+DPIA Records (Data Protection Impact Assessment):
+A section or repository where the facility can upload, store, and view DPIA documents conducted for new system features, data processing activities, or integrations, as required by data protection laws.
+
+IX. Communication Tools (Admin to Staff/Doctors & Facility-Wide Patient Comms)**seems like an interesting addition, can do as a current or future feature
+Navigation: "Communication" -> "Announcements" / "Patient Message Templates"
+Internal Announcements:
+[+ Create New Announcement] Button.
+Target Audience Selection: All Users, Doctors Only, Nurses Only, Specific Department(s), Specific Role(s), Individual Users.
+Message Title & Content (Rich text editor supporting basic formatting, links).
+Urgency Level: Normal, High (High urgency may trigger more prominent in-app notifications or even SMS alerts to staff if configured).
+Optional Expiry Date for the announcement (after which it's no longer prominently displayed).
+Sent announcements appear on user dashboards (based on target audience) or as dismissible in-app notifications. Log of past announcements.
+Patient Communication Templates (Admin manages facility-wide default templates; Doctors might have personal versions or ability to customize within limits):
+List of templates categorized by purpose: Appointment Confirmation, Appointment Reminder, Reschedule Notification, Cancellation Notification, Lab Report Ready Notification, Prescription Shared Notification, General Health Advisory, Payment Reminders, Teleconsultation Instructions, Feedback Request.
+For each template:
+Template Name, Purpose Category.
+Communication Channel(s): SMS, Email, WhatsApp (if integrated and consented by patient for that channel).
+Content Editor (with predefined placeholders like [PatientFirstName], [PatientLastName], [DoctorName], [AppointmentDate], [AppointmentTime], [FacilityName], [TeleconsultLink], [ABHA_ID], [OutstandingBalance]).
+[Edit Template], [Preview Template] (showing how it would look with sample data), [Activate/Deactivate Template].
+AI Agent Message Review (If AI is used to generate or suggest new patient message types or dynamic content):
+A queue where AI-generated message templates or scripts are presented for Admin approval before they can be used live in automated patient communications.
+Admin can review, edit, approve, or reject these AI suggestions. Audit trail of approvals.
+Broadcast Patient Messages (To be used with extreme caution, primarily for critical, non-marketing information):
+Example use cases: Emergency facility closure, critical public health alert relevant to the facility's patient base.
+Targeting: All active patients, patients with upcoming appointments in X days, patients with specific conditions (if ethically permissible and consented for such communication).
+Requires multiple confirmations from Admin before sending, due to potential cost and impact. Clear audit log.
+
+X. Escalation and Feedback Workflow
+Navigation: "Support" -> "Patient Complaints" / "System Feedback" / "Internal QA"
+Patient Complaint Management Module:
+(This module can be fed by a patient portal feedback form, dedicated email/phone line where staff manually log complaints, or integrated patient feedback apps).
+List View of Complaints: Complaint ID, Patient Name/ID, Date Received, Source Channel (Portal, Phone, Email, In-Person), Assigned To (Staff Member/Doctor), Status (Open, In Progress, Awaiting Patient Response, Resolved, Closed), Complaint Category (Billing Issue, Appointment Problem, Doctor Interaction, Facility Amenities, Technical Issue, Data Privacy Concern), Urgency.
+[+ Log New Complaint] form for manual entry by staff.
+View Complaint Details: Full description of the complaint, patient contact information, history of communications and actions taken on this complaint.
+Actions on a Complaint: [Assign to Staff/Doctor], [Add Internal Note/Update], [Send Response to Patient], [Change Status], [Mark as Resolved] (with a mandatory resolution summary), [Close Ticket].
+Reporting: Dashboards on average complaint resolution time, number of open/closed complaints by category, common complaint themes.
+Internal Feedback/System Issues Log:
+A simple form or channel for Doctors and Staff to report software bugs, suggest system improvements, or highlight operational issues within the EHR.
+Admin reviews these submissions, can categorize them, assign priority, and track them (e.g., assign to internal IT team, EHR vendor support, or relevant operational manager).
+Patient Feedback Summary (If automated post-appointment surveys or other feedback mechanisms are used):
+Dashboard showing aggregated patient satisfaction scores (e.g., Overall Satisfaction CSAT/NPS, Doctor Communication rating, Ease of Appointment Booking, AI Follow-up Helpfulness score).
+AI-powered summarization of common themes from free-text feedback comments (e.g., "positive sentiment around AI scribe accuracy," "negative sentiment regarding parking").
+Internal Quality Assurance (QA) Notes (Optional):
+If a facility conducts internal audits or peer reviews of medical records (for quality improvement, not for punitive action).
+A section where QA reviewers can log de-identified notes or observations on adherence to documentation standards, clinical pathways, etc. This data is aggregated and used for training and process improvement.
+
+XI. Role Delegation & Access Logs (Granular Permissions)
+Navigation: "Settings" -> "Roles & Permissions" / "Audit Logs" (Admin has full view of audit logs as described in Section V)
+Role Management:
+List of default system roles: Super Admin, Doctor (with permissions varying based on HPR Verified status vs. HPR Provisional status), Receptionist, Nurse, Lab Officer, Pharmacy Officer, Billing Clerk. These default roles have pre-defined permission sets.
+[+ Create Custom Role] Button:
+Admin provides a Role Name (e.g., "Senior Nurse," "Department Admin," "Audit Reviewer").
+Permission Tree: A granular, hierarchical list of all modules, sub-modules, data types, and actions within the EHR. Admin can assign specific permissions (e.g., View, Create, Edit, Delete, Approve, Sign, Export, Configure) for each item.
+Example granular permissions: "Access Billing Module (View Only)," "Edit Facility Settings (Full Control)," "Manage Doctor Schedules (All Doctors)," "View Clinical Notes (Read-Only for audit role)," "Sign Prescriptions (Only for HPR-verified Doctor role)."
+Edit Default Roles: Super Admin can fine-tune permissions for default roles to some extent (e.g., remove a permission from 'Receptionist'), but core essential permissions for roles like 'Doctor' (related to clinical care when HPR verified) or 'Super Admin' itself would be less mutable.
+Access Logs (Reiteration of comprehensive audit trail):
+Admin has privileged access to the full audit trail system (as detailed in Section V - Record Governance & Audit Trail).
+Configuration of Suspicious Activity Alerts (Admin can set up rules to get notified):
+E.g., "Alert if user [Role/Name] exports > [N] patient records in [T] hours."
+"Alert on > [M] failed login attempts for any single account within [S] minutes."
+"Alert if a user logs in from a significantly new IP address or geographic location for the first time."
+"Alert on any access using 'Break-Glass' emergency protocol."
+"Alert if HPR status for an active doctor changes to suspended/invalid."
+
+XII. Optional Modules for Large Hospitals (Can be enabled/configured based on facility needs)
+Multi-Location Support (for hospital chains or clinics with multiple branches):
+Facility Settings: [+ Add Branch Location] - Each branch can have its own address, contact details, specific services offered, and potentially separate operational hours or staff assignments.
+User Management: Assign doctors/staff to a primary branch, with options to allow them to work across multiple selected branches.
+Reporting & Analytics: Filter most reports by branch, or view aggregated data across all locations.
+Resource Scheduling: Manage resources (e.g., specific consultation rooms, high-cost equipment) per branch.
+Multi-Departmental Tagging & Advanced Reporting: (Core functionality covered in Facility Settings & Doctor Management, but advanced analytics might include patient flow analysis between departments, referral patterns, and departmental P&L if billing is deeply integrated).
+Advanced Cross-Consultation Tracking: Analytics on patient pathways and outcomes as they move between different specialists or departments within the hospital for the same episode of care.
+API Control Panel (Advanced, for facilities with strong IT capabilities managing many integrations):
+Fine-grained control to enable or disable specific API endpoints for different external integrations.
+Set specific rate limits, request quotas, and access policies per API key or per integrating system.
+View detailed API traffic logs, including request/response payloads (for troubleshooting), latency, and error rates specifically for external API consumers.
+NDHM Production Integration Management (For central IT managing the ABDM lifecycle):
+Separate configurations for NDHM Sandbox and Production environments (endpoints, credentials).
+A controlled process or interface for managing the lifecycle of NDHM integrations, e.g., testing new UHI use cases in sandbox before enabling in production.
+Dedicated monitoring dashboards for the health and performance of all NDHM API interactions (HPR, HFR, Consent Manager, UHI Gateway, Health Information Exchange).
+Advanced Inventory Management (for large hospital pharmacies/central stores):
+Often part of a dedicated Hospital Information System (HIS) or ERP.
+If EHR includes this: Multi-store inventory, indenting process between departments and central store, formulary management, purchase order generation, supplier management, batch/expiry tracking with alerts for near-expiry items, stock valuation.
+Comprehensive Billing Module (beyond basic fee collection):
+Service code management (CPT, local codes), configurable price lists for different patient categories (General, Insurance A, Corporate B), insurance panel empanelment and pre-authorization workflows, co-pay and deductible management, patient invoicing and statement generation, integration with payment gateways, accounts receivable tracking, management of advance payments and refunds.
+
+
+
+
