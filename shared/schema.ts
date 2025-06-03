@@ -80,7 +80,9 @@ export const consultations = pgTable("consultations", {
   chiefComplaint: text("chief_complaint"),
   symptoms: text("symptoms"),
   diagnosis: text("diagnosis"),
+  treatmentPlan: text("treatment_plan"),
   clinicalNotes: text("clinical_notes"),
+  notes: jsonb("notes"), // Structured clinical notes from AI
   vitalSigns: jsonb("vital_signs"), // JSON object for BP, pulse, etc.
   aiTranscription: jsonb("ai_transcription"), // Store voice transcription data
   language: varchar("language", { length: 10 }).default("en"),
