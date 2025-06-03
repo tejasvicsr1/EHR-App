@@ -107,13 +107,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid HPR ID format" });
       }
 
+      // Check if HPR ID is already in use by another user
+      const existingUser = await storage.getUserByHprId(hprId);
+      if (existingUser && existingUser.id !== req.user.id) {
+        return res.status(400).json({ message: "HPR ID already registered with another account" });
+      }
+
       const updatedUser = await storage.verifyHprId(req.user.id, hprId);
       res.json({
         message: "HPR ID verified successfully",
         user: { ...updatedUser, password: undefined },
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("HPR verification error:", error);
+      if (error.code === '23505') {
+        return res.status(400).json({ message: "HPR ID already registered with another account" });
+      }
       res.status(500).json({ message: "HPR verification failed" });
     }
   });
@@ -273,7 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Voice recording routes
+  // Voice recording and transcription routes
   app.post("/api/voice-recordings", authenticateToken, async (req: any, res) => {
     try {
       const recordingData = {
@@ -289,6 +298,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/consultations/:id/transcription", authenticateToken, async (req: any, res) => {
+    try {
+      const consultationId = parseInt(req.params.id);
+      const { entries } = req.body;
+      
+      const consultation = await storage.getConsultation(consultationId);
+      if (!consultation || consultation.doctorId !== req.user.id) {
+        return res.status(404).json({ message: "Consultation not found" });
+      }
+
+      // Update consultation with transcription data
+      const updatedConsultation = await storage.updateConsultation(consultationId, {
+        aiTranscription: JSON.stringify(entries),
+      });
+
+      res.json({ 
+        message: "Transcription saved successfully",
+        consultation: updatedConsultation 
+      });
+    } catch (error) {
+      console.error("Save transcription error:", error);
+      res.status(500).json({ message: "Failed to save transcription" });
+    }
+  });
+
+  app.post("/api/consultations/:id/generate-notes", authenticateToken, async (req: any, res) => {
+    try {
+      const consultationId = parseInt(req.params.id);
+      const { transcription, patientId, language } = req.body;
+      
+      const consultation = await storage.getConsultation(consultationId);
+      if (!consultation || consultation.doctorId !== req.user.id) {
+        return res.status(404).json({ message: "Consultation not found" });
+      }
+
+      // Simulate AI-generated clinical notes
+      // In a real implementation, this would call an AI service like OpenAI or healthcare-specific AI
+      const generatedNotes = {
+        chiefComplaint: "Patient presents with primary symptoms as discussed during consultation.",
+        historyOfPresentIllness: "Based on patient's description, symptoms have been ongoing with varying intensity.",
+        clinicalFindings: "Clinical examination findings as documented during consultation.",
+        assessment: "Clinical assessment based on patient history and examination findings.",
+        plan: "Treatment plan including medication, lifestyle modifications, and follow-up care.",
+        medications: ["As prescribed during consultation"],
+        followUp: "Schedule follow-up appointment as recommended.",
+      };
+
+      // Update consultation with generated notes
+      const updatedConsultation = await storage.updateConsultation(consultationId, {
+        diagnosis: generatedNotes.assessment,
+        treatmentPlan: generatedNotes.plan,
+        notes: JSON.stringify(generatedNotes),
+      });
+
+      res.json({ 
+        message: "Clinical notes generated successfully",
+        notes: generatedNotes,
+        consultation: updatedConsultation 
+      });
+    } catch (error) {
+      console.error("Generate notes error:", error);
+      res.status(500).json({ message: "Failed to generate clinical notes" });
+    }
+  });
+
   app.get("/api/consultations/:id/recordings", authenticateToken, async (req: any, res) => {
     try {
       const consultationId = parseInt(req.params.id);
@@ -297,6 +371,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get recordings error:", error);
       res.status(500).json({ message: "Failed to fetch recordings" });
+    }
+  });
+
+  // ABHA verification routes
+  app.post("/api/patients/:id/abha/verify", authenticateToken, async (req: any, res) => {
+    try {
+      const patientId = parseInt(req.params.id);
+      const { abhaId } = req.body;
+      
+      const patient = await storage.getPatient(patientId);
+      if (!patient || patient.doctorId !== req.user.id) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      // In a real implementation, this would call the ABHA Gateway API
+      // For now, we'll simulate the verification process
+      if (!abhaId || abhaId.length !== 14) {
+        return res.status(400).json({ message: "Invalid ABHA ID format" });
+      }
+
+      // Simulate OTP sending
+      res.json({
+        message: "OTP sent successfully",
+        transactionId: `txn_${Date.now()}`,
+      });
+    } catch (error) {
+      console.error("ABHA verification error:", error);
+      res.status(500).json({ message: "ABHA verification failed" });
+    }
+  });
+
+  app.post("/api/patients/:id/abha/verify-otp", authenticateToken, async (req: any, res) => {
+    try {
+      const patientId = parseInt(req.params.id);
+      const { abhaId, otp } = req.body;
+      
+      const patient = await storage.getPatient(patientId);
+      if (!patient || patient.doctorId !== req.user.id) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      // In a real implementation, this would verify OTP with ABHA Gateway
+      // For now, we'll simulate successful verification
+      if (otp === "123456") {
+        const updatedPatient = await storage.updatePatient(patientId, {
+          abhaId,
+          isAbhaVerified: true,
+        });
+        
+        res.json({
+          message: "ABHA ID verified successfully",
+          patient: updatedPatient,
+        });
+      } else {
+        res.status(400).json({ message: "Invalid OTP" });
+      }
+    } catch (error) {
+      console.error("ABHA OTP verification error:", error);
+      res.status(500).json({ message: "OTP verification failed" });
     }
   });
 

@@ -52,7 +52,7 @@ export default function Sidebar({ user }: SidebarProps) {
             <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
               <Stethoscope className="h-4 w-4 text-white" />
             </div>
-            <span className="text-lg font-bold text-neutral-900">LAYRD</span>
+            <span className="text-lg font-bold text-neutral-900">LAYRD123</span>
           </div>
           <div className="w-6"></div>
         </div>
@@ -80,7 +80,7 @@ export default function Sidebar({ user }: SidebarProps) {
                 <Stethoscope className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-neutral-900">LAYRD</h1>
+                <h1 className="text-xl font-bold text-neutral-900">LAYRD123</h1>
                 <p className="text-xs text-neutral-500">Healthcare Platform</p>
               </div>
             </div>
@@ -121,7 +121,10 @@ export default function Sidebar({ user }: SidebarProps) {
               <Avatar className="h-10 w-10">
                 <AvatarImage src={user?.profileImageUrl} />
                 <AvatarFallback>
-                  {user?.fullName?.split(" ").map((n: string) => n[0]).join("") || "D"}
+                  {user?.fullName
+                    ?.split(" ")
+                    .map((n: string) => n[0])
+                    .join("") || "D"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
