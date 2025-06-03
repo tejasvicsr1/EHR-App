@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import VoiceRecorder from "@/components/VoiceRecorder";
 import PatientSelector from "@/components/PatientSelector";
+import AiMedicalScribe from "@/components/AiMedicalScribe";
+import AbhaVerification from "@/components/AbhaVerification";
 import {
   Plus,
   Mic,
@@ -36,6 +38,14 @@ export default function Consultation({ user }: ConsultationProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [language, setLanguage] = useState("en");
   const [consultationNotes, setConsultationNotes] = useState("");
+  const [activeTab, setActiveTab] = useState<"overview" | "scribe" | "abha" | "history">("overview");
+  const [vitalSigns, setVitalSigns] = useState({
+    bloodPressure: "",
+    heartRate: "",
+    temperature: "",
+    oxygenSaturation: "",
+    respiratoryRate: "",
+  });
 
   const { data: consultationsData, isLoading } = useQuery({
     queryKey: ["/api/consultations"],
